@@ -15,6 +15,7 @@ from models import (
     OutreachMessage, JobStartResponse
 )
 from services.websocket_manager import ws_manager
+from services.weaviate import get_weaviate_service
 from agents.orchestrator import orchestrator
 import asyncio
 
@@ -273,6 +274,39 @@ async def get_candidate_message(candidate_id: str, db: Session = Depends(get_db)
         generated_at=db_message.generated_at
     )
 
+
+# Semantic search endpoints (Weaviate)
+
+@app.get("/api/search/candidates")
+async def search_candidates_by_strengths(
+    query: str,
+    limit: int = 10
+):
+    """
+    Search candidates using semantic similarity on their strengths.
+
+    Args:
+        query: Natural language query describing desired candidate strengths
+        limit: Maximum number of results (default 10)
+
+    Returns:
+        List of candidates ranked by similarity
+    """
+    try:
+        weaviate_service = get_weaviate_service()
+        results = weaviate_service.search_by_strengths(
+            query=query,
+            limit=limit
+        )
+
+        return {
+            "query": query,
+            "total_results": len(results),
+            "candidates": results
+        }
+    except Exception as e:
+        logger.error(f"Error searching candidates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # WebSocket endpoint
 

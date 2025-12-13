@@ -11,6 +11,7 @@ from agents.analyzer import AnalyzerAgent
 from agents.engager import EngagerAgent
 from database import DBJob, DBCandidate, DBMessage
 from services.websocket_manager import ws_manager
+from services.weaviate import get_weaviate_service
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class RecruitingOrchestrator:
         db: Session
     ):
         """
-        Save candidates and messages to database.
+        Save candidates and messages to database (SQLite + Weaviate).
 
         Args:
             job_id: The job ID
@@ -110,11 +111,14 @@ class RecruitingOrchestrator:
             db: Database session
         """
         try:
+            # Get Weaviate service for vector storage
+            weaviate_service = get_weaviate_service()
+
             for candidate in candidates:
                 analysis = candidate.get("analysis", {})
                 message = candidate.get("message", {})
 
-                # Create candidate record
+                # Create candidate record in SQLite
                 db_candidate = DBCandidate(
                     job_id=job_id,
                     username=candidate["username"],
@@ -132,6 +136,25 @@ class RecruitingOrchestrator:
                 db.add(db_candidate)
                 db.flush()  # Get candidate ID
 
+                # Store in Weaviate for semantic search
+                try:
+                    weaviate_service.store_candidate(
+                        candidate_id=db_candidate.id,
+                        job_id=job_id,
+                        username=candidate["username"],
+                        profile_url=candidate["profile_url"],
+                        strengths=analysis.get("strengths", []),
+                        concerns=analysis.get("concerns", []),
+                        skills=analysis.get("skills", []),
+                        fit_score=analysis.get("fit_score", 0),
+                        location=candidate.get("location"),
+                        bio=candidate.get("bio")
+                    )
+                    logger.info(f"Stored candidate {candidate['username']} in Weaviate")
+                except Exception as weaviate_error:
+                    # Log error but don't fail the entire save operation
+                    logger.error(f"Failed to store candidate in Weaviate: {weaviate_error}")
+
                 # Create message record
                 if message:
                     db_message = DBMessage(
@@ -142,7 +165,7 @@ class RecruitingOrchestrator:
                     db.add(db_message)
 
             db.commit()
-            logger.info(f"Saved {len(candidates)} candidates to database")
+            logger.info(f"Saved {len(candidates)} candidates to SQLite and Weaviate")
 
         except Exception as e:
             logger.error(f"Error saving results to database: {e}")
