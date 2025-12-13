@@ -6,9 +6,10 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/mirror.yml"
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   mirror:
