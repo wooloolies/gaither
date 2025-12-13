@@ -19,9 +19,27 @@ const stZhongsong = localFont({
   variable: '--font-stzhongsong',
 })
 
-export const metadata: Metadata = {
-  title: 'LYRATHON-Gaither',
-  description: 'Autonomous multi-agent recruitment system',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Gaither',
+    description: 'Autonomous multi-agent recruitment system',
+    keywords: ['recruitment', 'multi-agent', 'autonomous', 'AI', 'hiring'],
+    authors: [{ name: 'Gaither' }],
+    openGraph: {
+      title: 'Gaither',
+      description: 'Autonomous multi-agent recruitment system',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Gaither',
+      description: 'Autonomous multi-agent recruitment system',
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  }
 }
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
