@@ -4,7 +4,6 @@ Claude API service for AI-powered analysis and generation.
 import anthropic
 import asyncio
 import logging
-import time
 from typing import Dict, Any
 from config import settings
 from .base import (
@@ -28,12 +27,6 @@ class ClaudeService(AbstractLLMService):
             raise LLMConfigurationError(
                 "ANTHROPIC_API_KEY is not configured. "
                 "Set it in your .env file or environment variables."
-            )
-
-        if not settings.ANTHROPIC_API_KEY.startswith("sk-ant-"):
-            raise LLMConfigurationError(
-                f"Invalid ANTHROPIC_API_KEY format. "
-                f"Expected key starting with 'sk-ant-', got '{settings.ANTHROPIC_API_KEY[:10]}...'"
             )
 
         try:
@@ -125,7 +118,10 @@ class ClaudeService(AbstractLLMService):
 
         except Exception as e:
             logger.error(f"Unexpected error calling Claude API: {e}")
-            raise LLMAPIError(f"Unexpected Claude API error: {e}") from e
+            # Wrap generic exceptions in LLMAPIError
+            if not isinstance(e, (LLMServiceError, asyncio.TimeoutError)):
+                raise LLMAPIError(f"Claude API error: {e}")
+            raise
 
     async def analyze(
         self,

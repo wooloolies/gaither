@@ -31,13 +31,6 @@ class GeminiService(AbstractLLMService):
                 "Set it in your .env file or environment variables."
             )
 
-        # Basic validation - Google API keys typically start with specific patterns
-        if len(settings.GEMINI_API_KEY) < 20:
-            raise LLMConfigurationError(
-                f"Invalid GEMINI_API_KEY format. "
-                f"API key appears too short (got {len(settings.GEMINI_API_KEY)} chars)"
-            )
-
         try:
             self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
             self.model_name = settings.GEMINI_MODEL
