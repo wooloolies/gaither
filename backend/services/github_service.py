@@ -14,10 +14,12 @@ class GitHubService:
 
     def __init__(self):
         self.base_url = "https://api.github.com"
-        self.headers = {
-            "Authorization": f"token {settings.GITHUB_TOKEN}",
-            "Accept": "application/vnd.github.v3+json"
-        }
+        # Only attach Authorization if token is present.
+        # Sending an empty/invalid token causes 401 and makes searches look like "0 results".
+        self.headers = {"Accept": "application/vnd.github.v3+json"}
+        if settings.GITHUB_TOKEN:
+            # Works for classic PATs and fine-grained tokens.
+            self.headers["Authorization"] = f"Bearer {settings.GITHUB_TOKEN}"
         self.client = httpx.AsyncClient(headers=self.headers, timeout=30.0)
 
     async def get_user(self, username: str) -> Optional[Dict[str, Any]]:
@@ -40,7 +42,11 @@ class GitHubService:
                 logger.warning(f"GitHub user not found: {username}")
                 return None
             else:
-                logger.error(f"GitHub API error: {response.status_code}")
+                logger.error(
+                    "GitHub API error (get_user) status=%s body=%s",
+                    response.status_code,
+                    response.text[:500],
+                )
                 return None
 
         except Exception as e:
@@ -75,7 +81,11 @@ class GitHubService:
                 logger.info(f"Fetched {len(repos)} repos for {username}")
                 return repos
             else:
-                logger.error(f"Error fetching repos: {response.status_code}")
+                logger.error(
+                    "GitHub API error (get_user_repos) status=%s body=%s",
+                    response.status_code,
+                    response.text[:500],
+                )
                 return []
 
         except Exception as e:
@@ -110,7 +120,11 @@ class GitHubService:
                 logger.info(f"Fetched {len(commits)} commits from {username}/{repo_name}")
                 return commits
             else:
-                logger.warning(f"Error fetching commits: {response.status_code}")
+                logger.warning(
+                    "GitHub API error (get_repo_commits) status=%s body=%s",
+                    response.status_code,
+                    response.text[:500],
+                )
                 return []
 
         except Exception as e:
@@ -144,7 +158,12 @@ class GitHubService:
                 logger.info(f"GitHub search found {len(users)} users for query: {query}")
                 return users
             else:
-                logger.error(f"GitHub search error: {response.status_code}")
+                logger.error(
+                    "GitHub search error status=%s body=%s query=%s",
+                    response.status_code,
+                    response.text[:500],
+                    query,
+                )
                 return []
 
         except Exception as e:

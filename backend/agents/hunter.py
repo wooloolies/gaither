@@ -7,7 +7,6 @@ from typing import Dict, List, Any
 from agents.base import BaseAgent
 from services.claude_service import claude_service
 from services.github_service import github_service
-from services.apify_service import apify_service
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -177,6 +176,15 @@ Prioritize frameworks over generic terms.
 
             # Extract location from job_data (passed through in execute)
             job_location = getattr(self, '_current_job_location', None)
+            if isinstance(job_location, str):
+                job_location = job_location.strip() or None
+
+            def _fmt_location(loc: str) -> str:
+                # Quote multi-word locations to avoid turning it into AND terms.
+                # e.g. location:"San Francisco"
+                if any(ch.isspace() for ch in loc):
+                    return f'location:"{loc}"'
+                return f"location:{loc}"
 
             # Strategy 1: Search by specific frameworks/technologies in repos
             # This finds people who actually USE the tech, not just know the language
@@ -193,7 +201,9 @@ Prioritize frameworks over generic terms.
 
             for fw in framework_queries:
                 query_parts = [
-                    f"{fw} in:name,description",  # Repos with framework in name/description
+                    # User search does NOT support repo "description" qualifier.
+                    # Use bio to find people who claim/use the tech.
+                    f"{fw} in:bio",
                     "type:user",  # CRITICAL: Only individual users, not organizations
                     "repos:>5",  # At least 5 repos (shows sustained activity)
                     "followers:5..1000"  # Sweet spot: experienced but not celebrity/org
@@ -201,7 +211,7 @@ Prioritize frameworks over generic terms.
 
                 # Add location if specified
                 if job_location:
-                    query_parts.append(f"location:{job_location}")
+                    query_parts.append(_fmt_location(job_location))
 
                 query = " ".join(query_parts)
                 logger.info(f"GitHub search query (framework): {query}")
@@ -226,7 +236,7 @@ Prioritize frameworks over generic terms.
 
                 # Add location if specified
                 if job_location:
-                    query_parts.append(f"location:{job_location}")
+                    query_parts.append(_fmt_location(job_location))
 
                 query = " ".join(query_parts)
                 logger.info(f"GitHub search query (language): {query}")
@@ -247,7 +257,7 @@ Prioritize frameworks over generic terms.
 
                 # Add location if specified
                 if job_location:
-                    query_parts.append(f"location:{job_location}")
+                    query_parts.append(_fmt_location(job_location))
 
                 query = " ".join(query_parts)
                 logger.info(f"GitHub search query (combined): {query}")
