@@ -2,7 +2,7 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import type { JobRequest } from '@/api/client'
-import { useAgentStore } from '@/store/agentStore'
+import { useAgentStore } from '@/store/agent-store'
 
 interface JobFormProps {
   onSubmit: (data: JobRequest) => void
