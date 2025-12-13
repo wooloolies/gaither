@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   mirror:
+    if: github.repository != 'ourfirstfluke-creator/woololies-mirrored'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
