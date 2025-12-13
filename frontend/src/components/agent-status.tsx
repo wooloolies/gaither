@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { useEffect, useRef } from 'react'
-import type { AgentStates, WebSocketEvent } from '@/store/agentStore'
+import type { AgentStates, WebSocketEvent } from '@/store/agent-store'
 
 const AGENT_CONFIG = {
   hunter: {

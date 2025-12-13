@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { useState } from 'react'
-import type { Candidate } from '@/store/agentStore'
+import type { Candidate } from '@/store/agent-store'
 
 interface CandidateCardProps {
   candidate: Candidate

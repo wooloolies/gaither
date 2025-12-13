@@ -1,5 +1,5 @@
-import CandidateCard from '@/components/CandidateCard'
-import type { Candidate } from '@/store/agentStore'
+import CandidateCard from '@/components/candidate-card'
+import type { Candidate } from '@/store/agent-store'
 
 interface CandidateGridProps {
   candidates: Candidate[]

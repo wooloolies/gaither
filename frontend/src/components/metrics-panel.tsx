@@ -1,4 +1,4 @@
-import type { Metrics } from '@/store/agentStore'
+import type { Metrics } from '@/store/agent-store'
 
 interface MetricsPanelProps {
   metrics: Metrics

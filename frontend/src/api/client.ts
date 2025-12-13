@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Candidate, Job } from '@/store/agentStore'
+import type { Candidate, Job } from '@/store/agent-store'
 
 export interface JobRequest {
   title: string

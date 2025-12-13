@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { useAgentStore } from '@/store/agentStore'
-import { useAgentWebSocket } from '@/hooks/useWebSocket'
+import { useAgentStore } from '@/store/agent-store'
+import { useAgentWebSocket } from '@/hooks/use-websocket'
 import { jobsApi, type JobRequest, type JobResponse } from '@/api/client'
-import JobForm from '@/components/JobForm'
-import AgentStatus from '@/components/AgentStatus'
-import CandidateCard from '@/components/CandidateCard'
-import MetricsPanel from '@/components/MetricsPanel'
+import JobForm from '@/components/job-form'
+import AgentStatus from '@/components/agent-status'
+import CandidateCard from '@/components/candidate-card'
+import MetricsPanel from '@/components/metrics-panel'
 
 export default function Dashboard() {
   const [jobId, setJobId] = useState<JobResponse['id'] | null>(null)

@@ -1,7 +1,5 @@
-'use client'
-
-import App from '@/App'
+import LandingPage from '@/features/Home/components/landing-page'
 
 export default function HomePage() {
-  return <App />
+  return <LandingPage />
 }
