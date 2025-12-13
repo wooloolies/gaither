@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import type { JobRequest } from '@/api/client'
+import { useAgentStore } from '@/store/agentStore'
 
 interface JobFormProps {
   onSubmit: (data: JobRequest) => void
@@ -9,6 +10,8 @@ interface JobFormProps {
 }
 
 export default function JobForm({ onSubmit, isLoading }: JobFormProps) {
+  const { selectedModel, setSelectedModel } = useAgentStore()
+
   const [formData, setFormData] = useState<JobRequest>({
     title: 'AI Engineer',
     description: `Key Responsibilities
@@ -45,7 +48,8 @@ Stakeholder engagement and collaboration skills`,
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Include selected model in the job data
+    onSubmit({ ...formData, model_provider: selectedModel })
   }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -98,6 +102,18 @@ Stakeholder engagement and collaboration skills`,
               className="w-full px-4 py-3 bg-[#18181b] border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors font-mono text-sm"
               placeholder="Your Company"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">LLM Model Provider</label>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="w-full px-4 py-3 bg-[#18181b] border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors font-mono text-sm"
+            >
+              <option value="claude">Claude (Anthropic)</option>
+              <option value="gemini">Gemini (Google)</option>
+            </select>
           </div>
 
           <div className="md:col-span-2">

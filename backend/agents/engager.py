@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import Dict, Any, List
 from agents.base import BaseAgent
-from services.llm import llm_service
+from services.llm import get_llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +144,9 @@ Write both a subject line and message body.
                 },
                 "required": ["subject", "body"]
             }
+
+            # Get LLM service based on job's model provider
+            llm_service = get_llm_service(job_data.get("model_provider"))
 
             message = await llm_service.function_call(
                 prompt=prompt,

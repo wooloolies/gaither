@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import Dict, List, Any
 from agents.base import BaseAgent
-from services.llm import llm_service
+from services.llm import get_llm_service
 from services.github_service import github_service
 from config import settings
 
@@ -141,6 +141,9 @@ Prioritize frameworks over generic terms.
         }
 
         try:
+            # Get LLM service based on job's model provider
+            llm_service = get_llm_service(job_data.get("model_provider"))
+
             keywords = await llm_service.function_call(
                 prompt=prompt,
                 function_name="extract_keywords",

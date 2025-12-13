@@ -62,6 +62,9 @@ async def health_check():
 async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     """Create a new recruiting job"""
     try:
+        # Use provided model_provider or default to settings
+        model_provider = job_data.model_provider or settings.MODEL_PROVIDER
+
         db_job = DBJob(
             title=job_data.title,
             description=job_data.description,
@@ -69,6 +72,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
             location=job_data.location,
             company_name=job_data.company_name,
             company_highlights=job_data.company_highlights,
+            model_provider=model_provider,
             status=JobStatus.PENDING.value
         )
 
@@ -76,7 +80,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_job)
 
-        logger.info(f"Created job: {db_job.id} - {db_job.title}")
+        logger.info(f"Created job: {db_job.id} - {db_job.title} (model: {model_provider})")
 
         return Job(
             id=db_job.id,
@@ -86,6 +90,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
             location=db_job.location,
             company_name=db_job.company_name,
             company_highlights=db_job.company_highlights or [],
+            model_provider=db_job.model_provider,
             created_at=db_job.created_at,
             status=JobStatus(db_job.status)
         )
@@ -111,6 +116,7 @@ async def get_job(job_id: str, db: Session = Depends(get_db)):
         location=db_job.location,
         company_name=db_job.company_name,
         company_highlights=db_job.company_highlights or [],
+        model_provider=db_job.model_provider,
         created_at=db_job.created_at,
         status=JobStatus(db_job.status)
     )
@@ -130,6 +136,7 @@ async def list_jobs(db: Session = Depends(get_db)):
             location=job.location,
             company_name=job.company_name,
             company_highlights=job.company_highlights or [],
+            model_provider=job.model_provider,
             created_at=job.created_at,
             status=JobStatus(job.status)
         )
@@ -161,7 +168,8 @@ async def start_job(job_id: str, db: Session = Depends(get_db)):
         "requirements": db_job.requirements or [],
         "location": db_job.location,
         "company_name": db_job.company_name,
-        "company_highlights": db_job.company_highlights or []
+        "company_highlights": db_job.company_highlights or [],
+        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER
     }
 
     # Start agent orchestrator in background

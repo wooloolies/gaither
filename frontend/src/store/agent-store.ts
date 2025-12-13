@@ -49,6 +49,7 @@ export interface Job {
   company_name?: string
   location?: string
   description?: string
+  model_provider?: string
 }
 
 interface AgentStoreState {
@@ -57,6 +58,8 @@ interface AgentStoreState {
   events: WebSocketEvent[]
   metrics: Metrics
   currentJob: Job | null
+  selectedModel: string
+  setSelectedModel: (model: string) => void
   setCurrentJob: (job: Job) => void
   setAgentState: (agent: keyof AgentStates, state: AgentStatus) => void
   addCandidate: (candidate: Candidate) => void
@@ -87,6 +90,9 @@ export const useAgentStore = create<AgentStoreState>((set) => ({
   events: [],
   metrics: initialMetrics,
   currentJob: null,
+  selectedModel: 'claude', // Default model
+
+  setSelectedModel: (model) => set({ selectedModel: model }),
 
   setCurrentJob: (job) => set({ currentJob: job }),
 
@@ -151,6 +157,7 @@ export const useAgentStore = create<AgentStoreState>((set) => ({
       events: [],
       metrics: initialMetrics,
       currentJob: null,
+      selectedModel: 'claude',
     }),
 
   handleWebSocketEvent: (event) =>

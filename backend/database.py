@@ -35,6 +35,7 @@ class DBJob(Base):
     location = Column(String, nullable=True)
     company_name = Column(String, nullable=False)
     company_highlights = Column(JSON, default=list)
+    model_provider = Column(String, nullable=True)  # "claude" or "gemini"
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
 

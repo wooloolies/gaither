@@ -1,7 +1,7 @@
 """
 Pydantic models for API request/response validation.
 """
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -23,6 +23,7 @@ class JobCreate(BaseModel):
     location: Optional[str] = None
     company_name: str = Field(..., min_length=1)
     company_highlights: List[str] = Field(default_factory=list)
+    model_provider: Optional[str] = Field(default=None, pattern="^(claude|gemini)$")
 
 
 class Job(JobCreate):

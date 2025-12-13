@@ -6,6 +6,7 @@ export interface JobRequest {
   description: string
   company_name: string
   location?: string
+  model_provider?: string
 }
 
 export interface JobResponse extends JobRequest {
