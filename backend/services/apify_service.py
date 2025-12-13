@@ -3,7 +3,7 @@ Apify service for web scraping GitHub profiles.
 """
 from apify_client import ApifyClient
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from config import settings
 
 logger = logging.getLogger(__name__)

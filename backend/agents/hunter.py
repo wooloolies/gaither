@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import Dict, List, Any
 from agents.base import BaseAgent
-from services.claude_service import claude_service
+from services.llm import llm_service
 from services.github_service import github_service
 from config import settings
 
@@ -85,7 +85,7 @@ class HunterAgent(BaseAgent):
 
     async def _extract_keywords(self, job_data: Dict[str, Any]) -> Dict[str, List[str]]:
         """
-        Extract search keywords from job description using Claude.
+        Extract search keywords from job description using LLM.
 
         Args:
             job_data: Job description and requirements
@@ -141,7 +141,7 @@ Prioritize frameworks over generic terms.
         }
 
         try:
-            keywords = await claude_service.function_call(
+            keywords = await llm_service.function_call(
                 prompt=prompt,
                 function_name="extract_keywords",
                 schema=schema
