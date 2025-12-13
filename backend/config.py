@@ -35,17 +35,35 @@ class Settings:
 
     # Constraints
     MAX_CANDIDATES_PER_JOB: int = int(os.getenv("MAX_CANDIDATES_PER_JOB", "10"))
+
+    # LLM Provider Configuration
+    MODEL_PROVIDER: str = os.getenv("MODEL_PROVIDER", "claude")  # Options: "claude" or "gemini"
+
+    # Claude Configuration
     CLAUDE_MODEL: str = "claude-sonnet-4-5-20250929"
+
+    # Gemini Configuration
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-preview-04")
 
     def validate(self):
         """Validate that required settings are present"""
+        # Validate MODEL_PROVIDER value
+        if self.MODEL_PROVIDER not in ["claude", "gemini"]:
+            raise ValueError(f"Invalid MODEL_PROVIDER: {self.MODEL_PROVIDER}. Must be 'claude' or 'gemini'")
+
+        # Common required API keys
         missing = []
-        if not self.ANTHROPIC_API_KEY:
-            missing.append("ANTHROPIC_API_KEY")
         if not self.APIFY_API_TOKEN:
             missing.append("APIFY_API_TOKEN")
         if not self.GITHUB_TOKEN:
             missing.append("GITHUB_TOKEN")
+
+        # Provider-specific API key validation
+        if self.MODEL_PROVIDER == "claude" and not self.ANTHROPIC_API_KEY:
+            missing.append("ANTHROPIC_API_KEY (required for MODEL_PROVIDER=claude)")
+        elif self.MODEL_PROVIDER == "gemini" and not self.GEMINI_API_KEY:
+            missing.append("GEMINI_API_KEY (required for MODEL_PROVIDER=gemini)")
 
         if missing:
             raise ValueError(f"Missing required environment variables: {', '.join(missing)}")

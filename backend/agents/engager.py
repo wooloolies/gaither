@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import Dict, Any, List
 from agents.base import BaseAgent
-from services.claude_service import claude_service
+from services.llm import llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class EngagerAgent(BaseAgent):
         job_data: Dict[str, Any]
     ) -> Dict[str, str]:
         """
-        Generate a personalized outreach message using Claude.
+        Generate a personalized outreach message using LLM.
 
         Args:
             candidate: Candidate with analysis
@@ -145,7 +145,7 @@ Write both a subject line and message body.
                 "required": ["subject", "body"]
             }
 
-            message = await claude_service.function_call(
+            message = await llm_service.function_call(
                 prompt=prompt,
                 function_name="generate_message",
                 schema=schema,

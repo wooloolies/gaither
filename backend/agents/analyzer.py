@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import Dict, Any, List
 from agents.base import BaseAgent
-from services.claude_service import claude_service
+from services.llm import llm_service
 from services.github_service import github_service
 
 logger = logging.getLogger(__name__)
@@ -143,8 +143,8 @@ class AnalyzerAgent(BaseAgent):
                     for commit in commits
                 ]
 
-            # Build analysis prompt for Claude
-            analysis_result = await self._claude_analyze(
+            # Build analysis prompt for LLM
+            analysis_result = await self._llm_analyze(
                 candidate,
                 top_repos,
                 commit_messages,
@@ -157,7 +157,7 @@ class AnalyzerAgent(BaseAgent):
             logger.error(f"Error analyzing candidate {candidate.get('username')}: {e}")
             return None
 
-    async def _claude_analyze(
+    async def _llm_analyze(
         self,
         candidate: Dict[str, Any],
         repos: List[Dict[str, Any]],
@@ -165,7 +165,7 @@ class AnalyzerAgent(BaseAgent):
         job_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Use Claude to analyze candidate fit.
+        Use LLM to analyze candidate fit.
 
         Args:
             candidate: Candidate profile
@@ -250,7 +250,7 @@ Be specific and reference actual projects or indicators from their profile.
         }
 
         try:
-            analysis = await claude_service.function_call(
+            analysis = await llm_service.function_call(
                 prompt=prompt,
                 function_name="analyze_candidate",
                 schema=schema,
@@ -261,7 +261,7 @@ Be specific and reference actual projects or indicators from their profile.
             return analysis
 
         except Exception as e:
-            logger.error(f"Error in Claude analysis: {e}")
+            logger.error(f"Error in LLM analysis: {e}")
             # Return fallback analysis
             return {
                 "fit_score": 50,
