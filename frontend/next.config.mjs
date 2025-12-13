@@ -2,6 +2,8 @@
 const nextConfig = {
   poweredByHeader: false,
   
+  reactCompiler: true,
+  
   async headers() {
     return [
       {

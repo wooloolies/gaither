@@ -7,6 +7,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        pixelify: ['var(--font-pixelify-sans)', 'sans-serif'],
+        stzhongsong: ['var(--font-stzhongsong)', 'serif'],
+      },
       colors: {
         background: 'hsl(var(--background))',
         panel: 'var(--bg-panel)',
@@ -59,7 +63,10 @@ const config: Config = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
         'slide-up': 'slideUp 0.5s ease-out',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float-slow': 'float 8s ease-in-out infinite',
+        'float-medium': 'float 6s ease-in-out infinite 1s',
+        'float-fast': 'float 5s ease-in-out infinite 0.5s',
       },
       keyframes: {
         fadeIn: {
@@ -79,7 +86,15 @@ const config: Config = {
             transform: 'translateY(0)',
             opacity: '1'
           }
-        }
+        },
+        float: {
+          '0%, 100%': {
+            transform: 'translateY(0) rotate(0deg)',
+          },
+          '50%': {
+            transform: 'translateY(-15px) rotate(3deg)',
+          },
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
