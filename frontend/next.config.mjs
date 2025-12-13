@@ -1,12 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 보안을 위해 x-powered-by 헤더 제거
   poweredByHeader: false,
   
   async headers() {
     return [
       {
-        // 모든 경로에 보안 헤더 적용
         source: '/(.*)',
         headers: [
           {
