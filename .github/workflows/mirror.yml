@@ -33,6 +33,16 @@ jobs:
           git remote add mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/ourfirstfluke-creator/woololies-mirrored.git"
           GIT_CURL_VERBOSE=1 git ls-remote mirror
 
+      - name: Debug token length
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          python - <<'PY'
+import os
+token = os.environ.get("MIRROR_TOKEN", "")
+print("len:", len(token))
+PY
+
       - name: Push to mirror
         env:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
