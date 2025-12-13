@@ -35,9 +35,26 @@ jobs:
         env:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          set -euo pipefail
-          echo "api_repo_http:$(curl -s -o /dev/null -w '%{http_code}' -H \"Authorization: token ${MIRROR_TOKEN}\" https://api.github.com/repos/ourfirstfluke-creator/woololies-mirrored)"
-          echo "git_info_refs_http:$(curl -s -o /dev/null -w '%{http_code}' -u \"x-access-token:${MIRROR_TOKEN}\" \"https://github.com/ourfirstfluke-creator/woololies-mirrored.git/info/refs?service=git-upload-pack\")"
+          python -c "import os, base64, urllib.request, urllib.error; t=os.environ.get('MIRROR_TOKEN',''); \
+def fetch(url, headers): \
+  req=urllib.request.Request(url, headers=headers); \
+  try: \
+    with urllib.request.urlopen(req, timeout=20) as resp: \
+      return resp.status, dict(resp.headers); \
+  except urllib.error.HTTPError as e: \
+    return e.code, dict(e.headers); \
+  except Exception as e: \
+    return None, {'error': str(e)}; \
+api_headers={'Authorization': f'token {t}', 'Accept':'application/vnd.github+json'}; \
+code_u,h_u=fetch('https://api.github.com/user', api_headers); \
+print('api_user_http:'+str(code_u)); \
+print('api_user_scopes:'+str(h_u.get('X-OAuth-Scopes') or h_u.get('x-oauth-scopes') or '')); \
+code_r,h_r=fetch('https://api.github.com/repos/ourfirstfluke-creator/woololies-mirrored', api_headers); \
+print('api_repo_http:'+str(code_r)); \
+auth=base64.b64encode(('x-access-token:'+t).encode()).decode(); \
+git_headers={'Authorization': 'Basic '+auth, 'User-Agent':'git/2.0'}; \
+code_g,_=fetch('https://github.com/ourfirstfluke-creator/woololies-mirrored.git/info/refs?service=git-upload-pack', git_headers); \
+print('git_info_refs_http:'+str(code_g))"
 
       - name: Add mirror remote (preflight)
         env:
