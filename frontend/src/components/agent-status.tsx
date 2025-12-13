@@ -126,3 +126,4 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
     </div>
   )
 }
+

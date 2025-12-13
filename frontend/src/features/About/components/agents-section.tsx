@@ -21,16 +21,14 @@ const agents = [
   },
 ]
 
-interface AgentsSectionProps {
-  isDark: boolean
-}
+interface AgentsSectionProps {}
 
 const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
-  function AgentsSection({ isDark }, ref) {
+  function AgentsSection(_props, ref) {
     return (
       <section 
         ref={ref} 
-        className={`min-h-screen transition-colors duration-500 ${isDark ? 'bg-[#3c3c3c]' : 'bg-white'}`}
+        className="min-h-screen transition-colors duration-500 bg-white dark:bg-[#3c3c3c]"
       >
         <div className="relative px-8 lg:px-12 py-20">
           <div className="max-w-7xl mx-auto">
@@ -40,9 +38,7 @@ const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className={`font-pixelify text-7xl md:text-8xl lg:text-[128px] mb-16 transition-colors duration-500 ${
-                isDark ? 'text-white' : 'text-black'
-              }`}
+              className="font-pixelify text-7xl md:text-8xl lg:text-[128px] mb-16 transition-colors duration-500 text-black dark:text-white"
             >
               Agents
             </motion.h2>
@@ -55,9 +51,7 @@ const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 viewport={{ once: true }}
-                className={`font-stzhongsong text-lg md:text-xl lg:text-2xl leading-relaxed tracking-tight transition-colors duration-500 ${
-                  isDark ? 'text-gray-200' : 'text-black'
-                }`}
+                className="font-stzhongsong text-lg md:text-xl lg:text-2xl leading-relaxed tracking-tight transition-colors duration-500 text-black dark:text-gray-200"
               >
                 <p className="mb-6">
                   Gaither shortens recruiting time by breaking the hiring process into three focused stages, each handled by a dedicated AI agent.
@@ -93,9 +87,7 @@ const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
                       {/* Arrow between cards */}
                       {index < agents.length - 1 && (
                         <div className="flex gap-1">
-                          <span className={`font-pixelify text-2xl transition-colors duration-500 ${
-                            isDark ? 'text-white' : 'text-black'
-                          }`}>&gt;&gt;</span>
+                          <span className="font-pixelify text-2xl transition-colors duration-500 text-black dark:text-white">&gt;&gt;</span>
                         </div>
                       )}
                     </div>
@@ -107,9 +99,7 @@ const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
                   {agents.map((agent) => (
                     <div 
                       key={`desc-${agent.id}`} 
-                      className={`font-stzhongsong text-sm md:text-base leading-relaxed transition-colors duration-500 ${
-                        isDark ? 'text-gray-300' : 'text-black'
-                      }`}
+                      className="font-stzhongsong text-sm md:text-base leading-relaxed transition-colors duration-500 text-black dark:text-gray-300"
                     >
                       {agent.description}
                     </div>
@@ -125,3 +115,4 @@ const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
 )
 
 export default AgentsSection
+

@@ -106,3 +106,4 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
     </motion.div>
   )
 }
+

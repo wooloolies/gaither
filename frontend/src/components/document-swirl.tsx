@@ -6,20 +6,11 @@ import nounNoteLine from '@/assets/noun-note-line.svg'
 import nounDocumentPixel from '@/assets/noun-document-pixel.svg'
 import nounDocument from '@/assets/noun-document.svg'
 
-interface DocumentSwirlProps {
-  readonly isDark?: boolean
-}
-
-export default function DocumentSwirl({ isDark = false }: DocumentSwirlProps) {
+export default function DocumentSwirl() {
   return (
     <div className="relative w-[180px] h-[100px] md:w-[220px] md:h-[120px] lg:w-[284px] lg:h-[165px]">
       {/* Bottom left document - noun-document-pixel.svg (rotated) */}
-      <div 
-        className="absolute bottom-0 left-0 transition-all duration-500"
-        style={{ 
-          filter: isDark ? 'brightness(0) invert(1)' : 'none',
-        }}
-      >
+      <div className="absolute bottom-0 left-0 transition-all duration-500 dark:[filter:brightness(0)_invert(1)]">
         <Image
           src={nounDocumentPixel}
           alt=""
@@ -30,12 +21,7 @@ export default function DocumentSwirl({ isDark = false }: DocumentSwirlProps) {
       </div>
 
       {/* Top middle document - noun-note.svg (tilted left) */}
-      <div 
-        className="absolute top-0 left-[25%] transition-all duration-500"
-        style={{ 
-          filter: isDark ? 'brightness(0) invert(1)' : 'none',
-        }}
-      >
+      <div className="absolute top-0 left-[25%] transition-all duration-500 dark:[filter:brightness(0)_invert(1)]">
         <Image
           src={nounNote}
           alt=""
@@ -46,12 +32,7 @@ export default function DocumentSwirl({ isDark = false }: DocumentSwirlProps) {
       </div>
 
       {/* Top right document - noun-document.svg (rotated) */}
-      <div 
-        className="absolute top-[15%] right-0 transition-all duration-500"
-        style={{ 
-          filter: isDark ? 'brightness(0) invert(1)' : 'none',
-        }}
-      >
+      <div className="absolute top-[15%] right-0 transition-all duration-500 dark:[filter:brightness(0)_invert(1)]">
         <Image
           src={nounDocument}
           alt=""
@@ -62,17 +43,16 @@ export default function DocumentSwirl({ isDark = false }: DocumentSwirlProps) {
       </div>
 
       {/* Swirl line connecting documents - hidden in dark mode */}
-      {!isDark && (
-        <div className="absolute top-[10%] left-[30%]">
-          <Image
-            src={nounNoteLine}
-            alt=""
-            width={119}
-            height={94}
-            className="w-[80px] h-auto md:w-[100px] lg:w-[119px]"
-          />
-        </div>
-      )}
+      <div className="absolute top-[10%] left-[30%] dark:hidden">
+        <Image
+          src={nounNoteLine}
+          alt=""
+          width={119}
+          height={94}
+          className="w-[80px] h-auto md:w-[100px] lg:w-[119px]"
+        />
+      </div>
     </div>
   )
 }
+
