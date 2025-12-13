@@ -1,13 +1,17 @@
-import { motion } from 'framer-motion'
+import type { Metrics } from '@/store/agentStore'
 
-export default function MetricsPanel({ metrics }) {
-  const formatTime = (seconds) => {
-    if (seconds < 60) return `${seconds}s`
-    const minutes = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${minutes}m ${secs}s`
-  }
+interface MetricsPanelProps {
+  metrics: Metrics
+}
 
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${minutes}m ${secs}s`
+}
+
+export default function MetricsPanel({ metrics }: MetricsPanelProps): JSX.Element {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-4">
@@ -20,7 +24,9 @@ export default function MetricsPanel({ metrics }) {
           <svg className="transform -rotate-90 w-full h-full">
             <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" className="text-panel" fill="none" />
             <circle
-              cx="64" cy="64" r="56"
+              cx="64"
+              cy="64"
+              r="56"
               stroke="currentColor"
               strokeWidth="8"
               className="text-accent-blue"
@@ -35,9 +41,7 @@ export default function MetricsPanel({ metrics }) {
             <span className="text-[10px] uppercase text-secondary font-mono">AVG FIT</span>
           </div>
         </div>
-        <div className="text-xs text-center text-secondary">
-          Target Score: 75+
-        </div>
+        <div className="text-xs text-center text-secondary">Target Score: 75+</div>
       </div>
 
       {/* Simple Stats Grid */}
@@ -55,7 +59,6 @@ export default function MetricsPanel({ metrics }) {
           <div className="text-2xl font-bold text-white font-mono">{formatTime(metrics.timeElapsed)}</div>
         </div>
       </div>
-
     </div>
   )
 }

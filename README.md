@@ -38,7 +38,7 @@ All in real-time, visible on a live dashboard.
 - WebSockets for real-time updates
 
 **Frontend:**
-- React 18, Vite
+- React 18, Next.js 13 App Router (TypeScript)
 - Zustand (state management)
 - TailwindCSS (styling)
 - Framer Motion (animations)
@@ -51,7 +51,7 @@ All in real-time, visible on a live dashboard.
 1. **Python 3.11+** and **Node.js 18+**
 2. **API Keys** (required):
    - [Anthropic Claude API key](https://console.anthropic.com/)
-   - [GitHub Personal Access Token](https://github.com/settings/tokens) (scopes: `public_repo`, `read:user`)
+   - [GitHub Personal Access Token](https://github.com/settings/tokens/new) (scopes: `public_repo`, `read:user`)
    - [Apify API token](https://apify.com/) (optional for demo)
 
 ### Installation
@@ -74,7 +74,7 @@ pip install -r ../requirements.txt
 3. **Frontend setup:**
 ```bash
 cd frontend
-npm install
+pnpm install
 ```
 
 ### Running the Application
@@ -94,14 +94,14 @@ python run.py
 # Server will start on http://localhost:8000
 ```
 
-**Terminal 2 - Frontend:**
+**Terminal 2 - Frontend (Next.js):**
 ```bash
 cd frontend
-npm run dev
-# Dev server will start on http://localhost:5173
+pnpm dev
+# Dev server will start on http://localhost:3000
 ```
 
-**Open:** http://localhost:5173
+**Open:** http://localhost:3000
 
 ## 📖 Usage
 
@@ -152,7 +152,7 @@ Quick test:
 curl http://localhost:8000/health
 
 # Frontend running?
-open http://localhost:5173
+open http://localhost:3000
 ```
 
 ## 📁 Project Structure
@@ -168,11 +168,13 @@ lyrathon-wooloolies/
 │   ├── models.py        # Pydantic schemas
 │   └── config.py        # Environment variables
 ├── frontend/
-│   └── src/
-│       ├── components/  # Dashboard, JobForm, AgentStatus, etc.
-│       ├── hooks/       # useWebSocket
-│       ├── store/       # Zustand state management
-│       └── api/         # Axios client
+│   ├── src/
+│   │   ├── app/         # Next.js App Router entry (layout, page)
+│   │   ├── components/  # Dashboard, JobForm, AgentStatus, etc.
+│   │   ├── hooks/       # useWebSocket
+│   │   ├── store/       # Zustand state management
+│   │   └── api/         # Axios client
+│   └── tsconfig.json    # Path alias @/* -> src/*
 ├── demo_job.md          # Sample job descriptions
 ├── TESTING.md           # Testing guide
 └── README.md            # This file

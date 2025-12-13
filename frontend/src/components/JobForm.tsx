@@ -1,8 +1,15 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+'use client'
 
-export default function JobForm({ onSubmit, isLoading }) {
-  const [formData, setFormData] = useState({
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import type { JobRequest } from '@/api/client'
+
+interface JobFormProps {
+  onSubmit: (data: JobRequest) => void
+  isLoading: boolean
+}
+
+export default function JobForm({ onSubmit, isLoading }: JobFormProps): JSX.Element {
+  const [formData, setFormData] = useState<JobRequest>({
     title: 'AI Engineer',
     description: `Key Responsibilities
 
@@ -33,22 +40,19 @@ Strong analytical and problem solving skills
 Effective communication and documentation abilities
 Stakeholder engagement and collaboration skills`,
     company_name: 'Pixta Vietnam',
-    location: 'Vietnam'
+    location: 'Vietnam',
   })
 
-  // Remove local isSubmitting state if parent controls it via isLoading
-  // But for safety, we can keep local for the form submission handler itself
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Validation or pre-processing here if needed
     onSubmit(formData)
   }
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
@@ -60,11 +64,9 @@ Stakeholder engagement and collaboration skills`,
           🎯
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
-            Initialize Recruitment
-          </h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Initialize Recruitment</h2>
           <div className="flex items-center gap-2 mt-1">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <p className="text-sm font-mono text-zinc-400 uppercase">System Ready for Input</p>
           </div>
         </div>
@@ -73,9 +75,7 @@ Stakeholder engagement and collaboration skills`,
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">
-              Target Role Title
-            </label>
+            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">Target Role Title</label>
             <input
               type="text"
               name="title"
@@ -88,9 +88,7 @@ Stakeholder engagement and collaboration skills`,
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">
-              Company Identifier
-            </label>
+            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">Company Identifier</label>
             <input
               type="text"
               name="company_name"
@@ -103,13 +101,11 @@ Stakeholder engagement and collaboration skills`,
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">
-              Location Parameters (Optional)
-            </label>
+            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">Location Parameters (Optional)</label>
             <input
               type="text"
               name="location"
-              value={formData.location}
+              value={formData.location ?? ''}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-[#18181b] border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors font-mono text-sm"
               placeholder="e.g. San Francisco or Remote"
@@ -117,9 +113,7 @@ Stakeholder engagement and collaboration skills`,
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">
-              Role Parameters / Job Description
-            </label>
+            <label className="block text-xs font-mono text-zinc-400 uppercase mb-2">Role Parameters / Job Description</label>
             <div className="relative">
               <textarea
                 name="description"
@@ -151,9 +145,7 @@ Stakeholder engagement and collaboration skills`,
             <span className="relative z-10 flex items-center gap-2">
               {isLoading ? 'INITIALIZING SWARM...' : 'DEPLOY AGENTS'}
             </span>
-            {isLoading && (
-              <div className="absolute inset-0 bg-gray-300 w-full animate-pulse-slow" />
-            )}
+            {isLoading && <div className="absolute inset-0 bg-gray-300 w-full animate-pulse-slow" />}
           </button>
         </div>
       </form>

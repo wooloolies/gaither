@@ -60,3 +60,4 @@ logs/
 Thumbs.db
 .turbo/
 .venv/
+.next/
