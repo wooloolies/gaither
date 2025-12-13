@@ -25,9 +25,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Add mirror remote (preflight)
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          git remote remove mirror || true
+          git remote add mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/ourfirstfluke-creator/woololies-mirrored.git"
+          GIT_CURL_VERBOSE=1 git ls-remote mirror
+
       - name: Push to mirror
         env:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          git remote add mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/ourfirstfluke-creator/woololies-mirrored.git"
           git push --force --prune mirror main
