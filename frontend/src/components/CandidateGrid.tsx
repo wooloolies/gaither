@@ -5,7 +5,7 @@ interface CandidateGridProps {
   candidates: Candidate[]
 }
 
-export default function CandidateGrid({ candidates }: CandidateGridProps): JSX.Element {
+export default function CandidateGrid({ candidates }: CandidateGridProps) {
   if (candidates.length === 0) {
     return (
       <div className="bg-slate-800 rounded-lg p-12 text-center">

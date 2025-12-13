@@ -8,7 +8,7 @@ interface JobFormProps {
   isLoading: boolean
 }
 
-export default function JobForm({ onSubmit, isLoading }: JobFormProps): JSX.Element {
+export default function JobForm({ onSubmit, isLoading }: JobFormProps) {
   const [formData, setFormData] = useState<JobRequest>({
     title: 'AI Engineer',
     description: `Key Responsibilities

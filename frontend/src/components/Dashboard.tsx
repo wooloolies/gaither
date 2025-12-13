@@ -10,7 +10,7 @@ import AgentStatus from '@/components/AgentStatus'
 import CandidateCard from '@/components/CandidateCard'
 import MetricsPanel from '@/components/MetricsPanel'
 
-export default function Dashboard(): JSX.Element {
+export default function Dashboard() {
   const [jobId, setJobId] = useState<JobResponse['id'] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 

@@ -14,7 +14,7 @@ const scoreColor = (score: number) => {
   return 'text-red-400 border-red-500/30 bg-red-500/10'
 }
 
-export default function CandidateCard({ candidate, index }: CandidateCardProps): JSX.Element {
+export default function CandidateCard({ candidate, index }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false)
 
   return (

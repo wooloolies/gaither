@@ -34,7 +34,7 @@ interface AgentStatusProps {
   events: WebSocketEvent[]
 }
 
-export default function AgentStatus({ agentStates, events }: AgentStatusProps): JSX.Element {
+export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   // Auto-scroll terminal

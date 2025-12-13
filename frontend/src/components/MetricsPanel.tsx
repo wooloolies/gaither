@@ -11,7 +11,7 @@ const formatTime = (seconds: number): string => {
   return `${minutes}m ${secs}s`
 }
 
-export default function MetricsPanel({ metrics }: MetricsPanelProps): JSX.Element {
+export default function MetricsPanel({ metrics }: MetricsPanelProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-4">

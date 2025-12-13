@@ -1,5 +1,5 @@
 import Dashboard from '@/components/Dashboard'
 
-export default function App(): JSX.Element {
+export default function App() {
   return <Dashboard />
 }
