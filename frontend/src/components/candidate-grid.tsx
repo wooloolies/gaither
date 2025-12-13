@@ -1,4 +1,4 @@
-import CandidateCard from '@/components/candidate-card'
+import CandidateCard from '@/components/dashboard/candidate-card'
 import type { Candidate } from '@/store/agent-store'
 
 interface CandidateGridProps {

@@ -1,0 +1,6 @@
+export { default } from '@/components/dashboard/dashboard'
+export { default as Dashboard } from '@/components/dashboard/dashboard'
+export { default as JobForm } from '@/components/dashboard/job-form'
+export { default as AgentStatus } from '@/components/dashboard/agent-status'
+export { default as CandidateCard } from '@/components/dashboard/candidate-card'
+export { default as MetricsPanel } from '@/components/dashboard/metrics-panel'

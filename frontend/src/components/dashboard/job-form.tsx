@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import type { JobRequest } from '@/api/client'
+import type { JobRequest } from '@/lib/api'
 import { useAgentStore } from '@/store/agent-store'
 
 interface JobFormProps {
