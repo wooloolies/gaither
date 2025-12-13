@@ -38,7 +38,7 @@ All in real-time, visible on a live dashboard.
 - WebSockets for real-time updates
 
 **Frontend:**
-- React 18, Next.js 13 App Router (TypeScript)
+- React 19, Next.js 16 App Router (TypeScript)
 - Zustand (state management)
 - TailwindCSS (styling)
 - Framer Motion (animations)
@@ -98,10 +98,10 @@ python run.py
 ```bash
 cd frontend
 pnpm dev
-# Dev server will start on http://localhost:3000
+# Dev server will start on http://localhost:5173
 ```
 
-**Open:** http://localhost:3000
+**Open:** http://localhost:5173
 
 ## 📖 Usage
 
@@ -152,7 +152,7 @@ Quick test:
 curl http://localhost:8000/health
 
 # Frontend running?
-open http://localhost:3000
+open http://localhost:5173
 ```
 
 ## 📁 Project Structure
