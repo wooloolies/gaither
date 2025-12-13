@@ -16,3 +16,4 @@ export const auth = betterAuth({
     },
   },
 })
+

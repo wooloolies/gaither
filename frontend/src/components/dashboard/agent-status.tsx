@@ -1,3 +1,5 @@
+"use client"
+
 import { motion, AnimatePresence } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import type { AgentStates, WebSocketEvent } from '@/store/agent-store'

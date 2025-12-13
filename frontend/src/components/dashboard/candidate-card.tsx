@@ -1,3 +1,5 @@
+"use client"
+
 import { motion, AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import type { Candidate } from '@/store/agent-store'
