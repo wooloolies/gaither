@@ -1,4 +1,4 @@
-name: Mirror to woololies-mirrored
+name: Mirror to wooloolies-mirrored
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   mirror:
-    if: github.repository != 'wooloolies-creator/woololies-mirrored'
+    if: github.repository != 'wooloolies-creator/wooloolies-mirrored'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -81,14 +81,14 @@ jobs:
           print(f"api_user_scopes:{scopes}")
 
           code_r, _h_r = fetch(
-              "https://api.github.com/repos/wooloolies-creator/woololies-mirrored",
+              "https://api.github.com/repos/wooloolies-creator/wooloolies-mirrored",
               api_headers,
           )
           print(f"api_repo_http:{code_r}")
 
           auth = base64.b64encode(f"x-access-token:{t}".encode()).decode()
           code_g, _h_g = fetch(
-              "https://github.com/wooloolies-creator/woololies-mirrored.git/info/refs?service=git-upload-pack",
+              "https://github.com/wooloolies-creator/wooloolies-mirrored.git/info/refs?service=git-upload-pack",
               {"Authorization": f"Basic {auth}", "User-Agent": "git/2.0"},
           )
           print(f"git_info_refs_http:{code_g}")
@@ -99,7 +99,7 @@ jobs:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           git remote remove mirror || true
-          git remote add mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/wooloolies-creator/woololies-mirrored.git"
+          git remote add mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/wooloolies-creator/wooloolies-mirrored.git"
           GIT_CURL_VERBOSE=1 git ls-remote mirror
 
       - name: Push to mirror
