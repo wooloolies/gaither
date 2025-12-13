@@ -52,9 +52,6 @@ importers:
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
-      react-use-websocket:
-        specifier: ^4.12.1
-        version: 4.13.0
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -1061,9 +1058,6 @@ packages:
 
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
-
-  react-use-websocket@4.13.0:
-    resolution: {integrity: sha512-anMuVoV//g2N76Wxqvqjjo1X48r9Np3y1/gMl7arX84tAPXdy5R7sB5lO5hvCzQRYjqXwV8XMAiEBOUbyrZFrw==}
 
   react@19.2.3:
     resolution: {integrity: sha512-Ku/hhYbVjOQnXDZFv2+RibmLFGwFdeeKHFcOTlrt7xplBnya5OGn/hIRDsqDiSUcfORsDC7MPxwork8jBwsIWA==}
@@ -2073,8 +2067,6 @@ snapshots:
       scheduler: 0.27.0
 
   react-fast-compare@3.2.2: {}
-
-  react-use-websocket@4.13.0: {}
 
   react@19.2.3: {}
 
