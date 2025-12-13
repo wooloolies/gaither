@@ -2,10 +2,18 @@
 Configuration settings loaded from environment variables.
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env files (local first, then project root)
+backend_dir = Path(__file__).resolve().parent
+env_candidates = [
+    backend_dir / ".env",           # backend/.env (local override)
+    backend_dir.parent / ".env",    # project root .env
+]
+for env_path in env_candidates:
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
 
 class Settings:
     """Application settings"""

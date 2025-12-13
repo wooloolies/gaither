@@ -37,11 +37,7 @@ jobs:
         env:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          python - <<'PY'
-import os
-token = os.environ.get("MIRROR_TOKEN", "")
-print("len:", len(token))
-PY
+          python -c "import os; t=os.environ.get('MIRROR_TOKEN',''); print('len:', len(t))"
 
       - name: Push to mirror
         env:
