@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base Colors - Deep Professional Dark Mode */
+    --bg-app: #09090b;       /* Zinc 950 */
+    --bg-panel: #18181b;     /* Zinc 900 */
+    --bg-surface: #27272a;   /* Zinc 800 */
+    
+    /* Text Colors */
+    --text-primary: #f4f4f5; /* Zinc 100 */
+    --text-secondary: #a1a1aa; /* Zinc 400 */
+    --text-tertiary: #52525b; /* Zinc 600 */
+
+    /* Borders */
+    --border-subtle: #27272a; /* Zinc 800 */
+    --border-highlight: #3f3f46; /* Zinc 700 */
+
+    /* Brand Accents - Creative but composed */
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-cyan: #06b6d4;
+    --accent-glow: rgba(59, 130, 246, 0.15);
+    
+    /* State Colors */
+    --state-success: #10b981;
+    --state-warning: #facc15;
+    --state-error: #ef4444;
+  }
+
+  body {
+    @apply bg-[var(--bg-app)] text-[var(--text-primary)] antialiased overflow-x-hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}

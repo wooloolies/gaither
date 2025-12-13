@@ -58,7 +58,7 @@ All in real-time, visible on a live dashboard.
 
 1. **Clone and setup environment variables:**
 ```bash
-cd lyrathon
+cd lyrathon-wooloolies
 cp .env.example .env
 # Edit .env and add your API keys
 ```
@@ -151,7 +151,7 @@ open http://localhost:5173
 ## 📁 Project Structure
 
 ```
-lyrathon/
+lyrathon-wooloolies/
 ├── backend/
 │   ├── agents/          # Hunter, Analyzer, Engager + Orchestrator
 │   ├── services/        # Claude, GitHub, Apify, WebSocket
