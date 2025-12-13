@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useAgentStore } from '@/store/agentStore'
 import { useAgentWebSocket } from '@/hooks/useWebSocket'
 import { jobsApi, type JobRequest, type JobResponse } from '@/api/client'
