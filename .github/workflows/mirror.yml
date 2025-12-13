@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - ".github/workflows/mirror.yml"
 
 permissions:
   contents: read
@@ -27,5 +28,5 @@ jobs:
         env:
           MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          git remote add mirror "https://${MIRROR_TOKEN}@github.com/ourfirstfluke-creator/woololies-mirrored.git"
+          git remote add mirror "https://x-access-token:${MIRROR_TOKEN}@github.com/ourfirstfluke-creator/woololies-mirrored.git"
           git push --force --prune mirror main
