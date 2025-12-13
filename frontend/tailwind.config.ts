@@ -67,6 +67,7 @@ const config: Config = {
         'float-slow': 'float 8s ease-in-out infinite',
         'float-medium': 'float 6s ease-in-out infinite 1s',
         'float-fast': 'float 5s ease-in-out infinite 0.5s',
+        'bounce-gentle': 'bounceGentle 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -93,6 +94,14 @@ const config: Config = {
           },
           '50%': {
             transform: 'translateY(-15px) rotate(3deg)',
+          },
+        },
+        bounceGentle: {
+          '0%, 100%': {
+            transform: 'translateY(0)',
+          },
+          '50%': {
+            transform: 'translateY(-8px)',
           },
         },
       },

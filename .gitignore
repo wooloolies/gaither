@@ -49,6 +49,7 @@ yarn-error.log*
 # Frontend build
 frontend/dist/
 frontend/build/
+frontend/tsconfig.tsbuildinfo
 .DS_Store
 
 # Logs

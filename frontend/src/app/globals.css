@@ -49,6 +49,16 @@
   --animate-float-slow: float 8s ease-in-out infinite;
   --animate-float-medium: float 6s ease-in-out infinite 1s;
   --animate-float-fast: float 5s ease-in-out infinite 0.5s;
+  --animate-bounce-gentle: bounceGentle 2s ease-in-out infinite;
+
+  @keyframes bounceGentle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
 
   @keyframes fadeIn {
     0% {
