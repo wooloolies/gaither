@@ -1,0 +1,14 @@
+{
+  "name": "wooloolies",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo run build",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "packageManager": "pnpm@10.11.0"
+}

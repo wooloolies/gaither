@@ -79,6 +79,13 @@ npm install
 
 ### Running the Application
 
+**Monorepo (pnpm + turbo)**
+```bash
+pnpm install
+pnpm dev
+# Runs backend (uv run python run.py) and frontend (pnpm dev) together
+```
+
 **Terminal 1 - Backend:**
 ```bash
 cd backend

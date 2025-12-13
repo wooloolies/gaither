@@ -1,0 +1,11 @@
+{
+  "name": "@wooloolies/backend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run -- python run.py",
+    "build": "echo \"No build step for Python backend\"",
+    "clean": "bash -c 'find . -name \"__pycache__\" -exec rm -rf {} +; find . -name \"*.pyc\" -delete'"
+  }
+}
+
