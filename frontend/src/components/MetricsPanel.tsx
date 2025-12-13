@@ -38,24 +38,24 @@ export default function MetricsPanel({ metrics }: MetricsPanelProps) {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-3xl font-bold text-white">{metrics.averageScore}</span>
-            <span className="text-[10px] uppercase text-secondary font-mono">AVG FIT</span>
+            <span className="text-[10px] uppercase text-muted-foreground font-mono">AVG FIT</span>
           </div>
         </div>
-        <div className="text-xs text-center text-secondary">Target Score: 75+</div>
+        <div className="text-xs text-center text-muted-foreground">Target Score: 75+</div>
       </div>
 
       {/* Simple Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-surface/30 p-4 rounded-lg border border-border">
-          <div className="text-secondary text-xs uppercase font-mono mb-1">Found</div>
+          <div className="text-muted-foreground text-xs uppercase font-mono mb-1">Found</div>
           <div className="text-2xl font-bold text-white">{metrics.totalFound}</div>
         </div>
         <div className="bg-surface/30 p-4 rounded-lg border border-border">
-          <div className="text-secondary text-xs uppercase font-mono mb-1">Msgs</div>
+          <div className="text-muted-foreground text-xs uppercase font-mono mb-1">Msgs</div>
           <div className="text-2xl font-bold text-white">{metrics.messagesGenerated}</div>
         </div>
         <div className="col-span-2 bg-surface/30 p-4 rounded-lg border border-border">
-          <div className="text-secondary text-xs uppercase font-mono mb-1">Elapsed Time</div>
+          <div className="text-muted-foreground text-xs uppercase font-mono mb-1">Elapsed Time</div>
           <div className="text-2xl font-bold text-white font-mono">{formatTime(metrics.timeElapsed)}</div>
         </div>
       </div>

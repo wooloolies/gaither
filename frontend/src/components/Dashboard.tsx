@@ -75,7 +75,7 @@ export default function Dashboard() {
             className="text-center mb-16"
           >
             <h1 className="text-6xl font-black mb-6 tracking-tight text-white">LYRATHON-WOOLOOLIES</h1>
-            <p className="text-xl text-secondary font-light max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto">
               Autonomous Multi-Agent Recruitment System
             </p>
           </motion.div>
@@ -97,7 +97,7 @@ export default function Dashboard() {
                 <div className={`font-mono text-xs font-bold uppercase tracking-wider mb-2 ${feature.color}`}>
                   {feature.title}
                 </div>
-                <div className="text-secondary text-sm">{feature.desc}</div>
+                <div className="text-muted-foreground text-sm">{feature.desc}</div>
               </motion.div>
             ))}
           </div>
@@ -136,7 +136,7 @@ export default function Dashboard() {
           </div>
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm font-medium text-secondary hover:text-white hover:bg-surface rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-white hover:bg-surface rounded-lg transition-colors"
           >
             Stop & Reset
           </button>
@@ -155,11 +155,11 @@ export default function Dashboard() {
           <div className="col-span-6 bg-panel border border-border rounded-xl overflow-hidden flex flex-col shadow-sm">
             <div className="p-4 border-b border-border flex items-center justify-between bg-surface/30">
               <h2 className="font-semibold text-white">Candidate Candidates</h2>
-              <span className="text-xs text-secondary font-mono">{candidates.length} FOUND</span>
+              <span className="text-xs text-muted-foreground font-mono">{candidates.length} FOUND</span>
             </div>
             <div className="p-4 overflow-y-auto flex-1 space-y-4">
               {candidates.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-secondary opacity-50">
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
                   <div className="text-4xl mb-4">🔭</div>
                   <p>Waiting for candidates...</p>
                 </div>

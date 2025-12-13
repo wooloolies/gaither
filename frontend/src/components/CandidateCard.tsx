@@ -26,7 +26,7 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
     >
       <div className="flex items-start gap-5">
         {/* Avatar / Initials */}
-        <div className="w-12 h-12 rounded-lg bg-panel border border-border flex items-center justify-center shrink-0 text-lg font-bold text-secondary">
+        <div className="w-12 h-12 rounded-lg bg-panel border border-border flex items-center justify-center shrink-0 text-lg font-bold text-muted-foreground">
           {candidate.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={candidate.avatar} alt={candidate.username} className="w-full h-full rounded-lg object-cover" />
@@ -59,7 +59,7 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           {/* Skills */}
           <div className="flex flex-wrap gap-2 mb-3">
             {candidate.skills?.slice(0, 5).map((skill, i) => (
-              <span key={skill ?? i} className="px-2 py-0.5 bg-panel border border-border rounded text-[10px] text-secondary">
+              <span key={skill ?? i} className="px-2 py-0.5 bg-panel border border-border rounded text-[10px] text-muted-foreground">
                 {skill}
               </span>
             ))}
@@ -79,7 +79,7 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
       </div>
 
       <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
-        <button onClick={() => setExpanded(!expanded)} className="text-xs text-secondary hover:text-white transition-colors">
+        <button onClick={() => setExpanded(!expanded)} className="text-xs text-muted-foreground hover:text-white transition-colors">
           {expanded ? 'Hide Details' : 'View Generated Message'}
         </button>
         <button className="text-xs font-medium bg-white text-black px-3 py-1.5 rounded hover:bg-gray-200 transition-colors">

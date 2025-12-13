@@ -48,7 +48,7 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
     <div className="flex flex-col h-full">
       {/* Agent Status Rows */}
       <div className="p-6 border-b border-border space-y-4 bg-surface/10">
-        <h3 className="text-xs font-mono text-secondary uppercase tracking-widest mb-4">Agent Swarm Status</h3>
+        <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-4">Agent Swarm Status</h3>
 
         {Object.entries(AGENT_CONFIG).map(([key, config]) => {
           const state = agentStates[key as keyof AgentStates]
@@ -58,7 +58,7 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
             <div key={key} className="flex items-center justify-between group">
               <div className="flex items-center gap-3">
                 <div className={`w-2 h-2 rounded-full ${isActive ? `animate-pulse ${config.dotBg}` : 'bg-gray-700'}`} />
-                <span className={`font-mono text-sm ${isActive ? 'text-white font-bold' : 'text-secondary'}`}>
+                <span className={`font-mono text-sm ${isActive ? 'text-white font-bold' : 'text-muted-foreground'}`}>
                   {config.name}
                 </span>
               </div>
@@ -80,7 +80,7 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
       {/* Terminal Output */}
       <div className="flex-1 flex flex-col min-h-0 bg-black/40">
         <div className="p-3 border-b border-border/50 sticky top-0 bg-panel/95 backdrop-blur z-10">
-          <h3 className="text-xs font-mono text-secondary">SYSTEM LOGS</h3>
+          <h3 className="text-xs font-mono text-muted-foreground">SYSTEM LOGS</h3>
         </div>
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-2">
           <AnimatePresence initial={false}>
