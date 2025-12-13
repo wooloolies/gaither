@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'LYRATHON-WOOLOOLIES',
+  title: 'LYRATHON-Gaither',
   description: 'Autonomous multi-agent recruitment system',
 }
 

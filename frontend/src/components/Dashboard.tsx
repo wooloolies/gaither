@@ -74,7 +74,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <h1 className="text-6xl font-black mb-6 tracking-tight text-white">LYRATHON-WOOLOOLIES</h1>
+            <h1 className="text-6xl font-black mb-6 tracking-tight text-white">Gaither</h1>
             <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto">
               Autonomous Multi-Agent Recruitment System
             </p>
@@ -122,7 +122,7 @@ export default function Dashboard() {
         <header className="flex items-center justify-between bg-panel border border-border px-6 py-4 rounded-xl shadow-sm shrink-0">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold tracking-tight text-white">
-              LYRATHON-WOOLOOLIES <span className="text-accent-blue text-sm font-mono ml-2">v2.0</span>
+              Gaither <span className="text-accent-blue text-sm font-mono ml-2">v2.0</span>
             </h1>
             <div
               className={`px-3 py-1 rounded-full text-xs font-mono border ${
