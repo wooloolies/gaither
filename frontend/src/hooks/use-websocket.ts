@@ -1,5 +1,15 @@
-import { useWebSocket, ReadyState } from 'ahooks'
+import { useWebSocket } from 'ahooks'
 import { useAgentStore, type WebSocketEvent } from '@/store/agent-store'
+
+// `ahooks` doesn't re-export `ReadyState` from the top-level entry in all builds,
+// so we keep a local enum aligned with WebSocket readyState values.
+const ReadyState = {
+  Connecting: 0,
+  Open: 1,
+  Closing: 2,
+  Closed: 3,
+} as const
+type ReadyStateType = (typeof ReadyState)[keyof typeof ReadyState]
 
 export const useAgentWebSocket = (jobId: string | number | null) => {
   const handleWebSocketEvent = useAgentStore((state) => state.handleWebSocketEvent)
@@ -8,12 +18,12 @@ export const useAgentWebSocket = (jobId: string | number | null) => {
 
   const { readyState } = useWebSocket(socketUrl, {
     reconnectLimit: 5,
-    reconnectInterval: (attemptNumber) => Math.min(Math.pow(2, attemptNumber) * 1000, 10000),
+    reconnectInterval: 1000,
     manual: !jobId,
     onOpen: () => {
       // Connection opened successfully
     },
-    onMessage: (message) => {
+    onMessage: (message: MessageEvent) => {
       try {
         const event = JSON.parse(message.data as string) as WebSocketEvent
         handleWebSocketEvent(event)
@@ -22,7 +32,7 @@ export const useAgentWebSocket = (jobId: string | number | null) => {
         console.error('Error parsing WebSocket message:', error)
       }
     },
-    onError: (error) => {
+    onError: (error: Event) => {
       // eslint-disable-next-line no-console
       console.error('WebSocket error:', error)
     },
@@ -31,7 +41,7 @@ export const useAgentWebSocket = (jobId: string | number | null) => {
     },
   })
 
-  const connectionStatusMap: Record<ReadyState, string> = {
+  const connectionStatusMap: Record<ReadyStateType, string> = {
     [ReadyState.Connecting]: 'Connecting',
     [ReadyState.Open]: 'Connected',
     [ReadyState.Closing]: 'Closing',
