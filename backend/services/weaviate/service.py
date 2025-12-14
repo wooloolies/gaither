@@ -19,13 +19,13 @@ from loguru import logger
 class WeaviateService:
     """Service for managing candidate embeddings in Weaviate."""
 
-    COLLECTION_NAME = "DemoCollection"
+    COLLECTION_NAME = "Candidates"
 
     def __init__(self):
         """Initialize Weaviate client and setup collections."""
         self.client = None
         self._connect()
-        # self._setup_schema()
+        self._setup_schema()
 
     def _connect(self):
         """Connect to Weaviate Cloud instance."""
@@ -76,10 +76,10 @@ class WeaviateService:
             self.client.collections.create(
                 name=self.COLLECTION_NAME,
                 description="Candidate profiles with analysis data for job matching",
-                vectorizer_config=Configure.Vectorizer.text2vec_google_aistudio(
+                vector_config=Configure.Vectors.text2vec_google_aistudio(
                     name="strengths_vector",
-                    source_properties=["strengths", "concerns"],
-                    model="text-embedding-004",
+                    source_properties=["strengths"],
+                    model="gemini-embedding-001",
                 ),
                 properties=[
                     Property(
@@ -275,12 +275,24 @@ class WeaviateService:
         try:
             collection = self.client.collections.get(self.COLLECTION_NAME)
 
-            # Execute the query
-            response = collection.query.near_text(
-                query=query,
-                limit=limit,
-                return_metadata=MetadataQuery(distance=True, score=True),
-            )
+            # Execute the query with named vector
+            # Since we use Configure.Vectors with name="strengths_vector",
+            # we need to specify target_vector
+            try:
+                response = collection.query.near_text(
+                    query=query,
+                    target_vector="strengths_vector",  # Use the named vector
+                    limit=limit,
+                    return_metadata=MetadataQuery(distance=True, score=True),
+                )
+            except Exception as e:
+                # Fallback: try without target_vector in case it's a default vector
+                logger.warning(f"Query with target_vector failed, trying without: {e}")
+                response = collection.query.near_text(
+                    query=query,
+                    limit=limit,
+                    return_metadata=MetadataQuery(distance=True, score=True),
+                )
 
             # Format results
             results = []

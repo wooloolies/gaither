@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List
 import json
 from pathlib import Path
+import hashlib
 
 from config import settings
 from database import init_db, get_db, DBJob, DBCandidate, DBMessage
@@ -68,6 +69,31 @@ async def startup_event():
         logger.debug("Skipping OpenAPI spec generation in production")
 
 
+# Helper functions
+
+def calculate_job_content_hash(title: str, company_name: str, description: str, requirements: list) -> str:
+    """
+    Calculate a hash of job content for duplicate detection.
+
+    Uses SHA256 hash of normalized job content (title + company + description + requirements).
+    This allows detecting duplicate jobs regardless of when they were created.
+
+    Args:
+        title: Job title
+        company_name: Company name
+        description: Job description
+        requirements: List of requirements
+
+    Returns:
+        SHA256 hash string (hex)
+    """
+    # Normalize content (lowercase, strip whitespace)
+    content = f"{title.strip().lower()}|{company_name.strip().lower()}|{description.strip().lower()}|{'|'.join(sorted(r.strip().lower() for r in requirements))}"
+
+    # Calculate SHA256 hash
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
@@ -79,11 +105,47 @@ async def health_check():
 
 @app.post("/api/jobs", response_model=Job)
 async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
-    """Create a new recruiting job"""
+    """
+    Create a new recruiting job.
+
+    Uses content-based duplicate detection: if a job with identical content already exists,
+    returns the existing job instead of creating a duplicate. This prevents multiple job_ids
+    for the same logical job regardless of when it was created.
+    """
     try:
         # Use provided model_provider or default to settings
         model_provider = job_data.model_provider or settings.MODEL_PROVIDER
 
+        # Calculate content hash for duplicate detection
+        content_hash = calculate_job_content_hash(
+            title=job_data.title,
+            company_name=job_data.company_name,
+            description=job_data.description,
+            requirements=job_data.requirements or []
+        )
+
+        # Check for duplicate jobs using content hash
+        # This detects duplicates regardless of when they were created
+        existing_job = db.query(DBJob).filter(
+            DBJob.content_hash == content_hash
+        ).first()
+
+        if existing_job:
+            logger.info(f"Duplicate job detected (by content hash), returning existing job: {existing_job.id} - {existing_job.title}")
+            return Job(
+                id=existing_job.id,
+                title=existing_job.title,
+                description=existing_job.description,
+                requirements=existing_job.requirements or [],
+                location=existing_job.location,
+                company_name=existing_job.company_name,
+                company_highlights=existing_job.company_highlights or [],
+                model_provider=existing_job.model_provider,
+                created_at=existing_job.created_at,
+                status=JobStatus(existing_job.status)
+            )
+
+        # Create new job with content hash
         db_job = DBJob(
             title=job_data.title,
             description=job_data.description,
@@ -92,6 +154,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
             company_name=job_data.company_name,
             company_highlights=job_data.company_highlights,
             model_provider=model_provider,
+            content_hash=content_hash,
             status=JobStatus.PENDING.value
         )
 
@@ -99,7 +162,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_job)
 
-        logger.info(f"Created job: {db_job.id} - {db_job.title} (model: {model_provider})")
+        logger.info(f"Created new job: {db_job.id} - {db_job.title} (model: {model_provider}, hash: {content_hash[:8]}...)")
 
         return Job(
             id=db_job.id,
