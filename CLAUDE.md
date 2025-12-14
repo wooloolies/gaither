@@ -213,15 +213,13 @@ The Hunter Agent uses a sophisticated multi-strategy approach to find high-quali
 4. **Technology Stack**: Combines related technologies to find well-rounded developers
 5. **Alternative Terms**: Uses abbreviations/alternative names (e.g., "k8s" for Kubernetes)
 
-**Quality Scoring (0-10 scale):**
-- Followers count (0-3 points): 100+ = 3pts, 50+ = 2pts, 20+ = 1pt
-- Public repos (0-2 points): 20+ = 2pts, 10+ = 1pt
-- Bio completeness (1 point): 30+ characters
-- Hireable flag (1 point)
-- Has name (1 point)
-- Has location (1 point)
-- Has email/company (1 point)
-- Healthy follower/following ratio (1 point bonus)
+**Quality Scoring (0-10 scale) - Balanced, not follower-obsessed:**
+- Public repos (0-3 points): 30+ = 3pts, 15+ = 2pts, 5+ = 1pt - **PRIMARY signal**
+- Bio completeness (0-2 points): 50+ chars = 2pts, 20+ chars = 1pt - Shows professionalism
+- Profile completeness (2 points): Has name (1pt) + Has location/email/company (1pt)
+- Followers (0-2 points): 100+ = 2pts, 25+ = 1pt - **REDUCED weight**
+- Hireable flag (1 point): Actively job-seeking
+- Healthy engagement ratio (1 point bonus): Quality > quantity (ratio 0.3-10x)
 
 **Recent Activity Check:**
 - Fetches user's 5 most recently pushed repositories
@@ -232,9 +230,9 @@ The Hunter Agent uses a sophisticated multi-strategy approach to find high-quali
 - Removes organizations and company accounts
 - Filters out tutorial-only accounts (100+ repos, <50 followers)
 - Removes bot-like accounts (following >> followers)
-- Requires minimum bio length (10+ characters)
+- Bio requirement: Flexible - allows empty bio if strong activity signals (10+ repos OR 50+ followers)
 - Requires minimum quality score (3/10)
-- Checks for recent GitHub activity
+- Checks for recent GitHub activity (active in last 6 months)
 
 ### GitHub Service Rate Limiting
 GitHub API calls are centralized in `GitHubService` (`backend/services/github_service.py`):
