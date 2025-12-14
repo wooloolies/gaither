@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 import logging
 from datetime import datetime
 from typing import List
+import json
+from pathlib import Path
 
 from config import settings
 from database import init_db, get_db, DBJob, DBCandidate, DBMessage
@@ -42,12 +44,28 @@ app.add_middleware(
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database tables on startup"""
+    """Initialize database tables and generate OpenAPI spec on startup"""
     try:
         init_db()
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
+    
+    # Generate and save OpenAPI spec (only in non-production environments)
+    if settings.ENVIRONMENT != "production":
+        try:
+            openapi_spec = app.openapi()
+            backend_dir = Path(__file__).parent
+            openapi_path = backend_dir / "openapi.json"
+            
+            with open(openapi_path, "w", encoding="utf-8") as f:
+                json.dump(openapi_spec, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"OpenAPI spec saved to {openapi_path}")
+        except Exception as e:
+            logger.error(f"Error generating OpenAPI spec: {e}")
+    else:
+        logger.debug("Skipping OpenAPI spec generation in production")
 
 
 # Health check endpoint

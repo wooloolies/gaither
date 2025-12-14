@@ -28,7 +28,7 @@ const AgentsSection = forwardRef<HTMLElement, AgentsSectionProps>(
     return (
       <section 
         ref={ref} 
-        className="min-h-screen transition-colors duration-500 bg-white dark:bg-[#3c3c3c]"
+        className="min-h-screen transition-colors duration-500"
       >
         <div className="relative px-8 lg:px-12 py-20">
           <div className="max-w-7xl mx-auto">

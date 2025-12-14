@@ -5,14 +5,11 @@ import DocumentSwirl from '@/components/document-swirl'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
-
-      {/* Floating Documents */}
-      {/* <FloatingDocuments /> */}
+    <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-8 lg:px-12">
-        <div className="max-w-4xl mx-auto text-center md:text-left md:ml-[20%] lg:ml-[25%]">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-8 lg:px-12 pt-36 lg:justify-start">
+        <div className="max-w-4xl mx-auto text-center md:text-left">
           {/* Main headline */}
           <div className="font-pixelify mb-8 transition-colors duration-500 text-black dark:text-white">
             <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed">
