@@ -107,6 +107,12 @@ Company: {job_data.get('company_name', '')}
 Location: {location}
 Description: {key_responsibilities}
 Requirements: {', '.join(job_data.get('requirements', []))}
+Core Skill Requirement: {job_data.get('core_skill_requirement', '')}
+Familiar With: {job_data.get('familiar_with', '')}
+Language Requirement: {job_data.get('language_requirement', '')}
+Work Type: {job_data.get('work_type', '')}
+Years of Experience: {job_data.get('years_of_experience', '')}
+Minimum Required Degree: {job_data.get('minimum_required_degree', '')}
 
 Extract and categorize:
 
