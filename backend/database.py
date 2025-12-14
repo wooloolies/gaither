@@ -1,7 +1,7 @@
 """
 Database models and setup using SQLAlchemy.
 """
-from sqlalchemy import create_engine, Column, String, Integer, Text, DateTime, JSON, ForeignKey
+from sqlalchemy import create_engine, Column, String, Integer, Text, DateTime, JSON, ForeignKey, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -27,6 +27,10 @@ Base = declarative_base()
 class DBJob(Base):
     """Job database model"""
     __tablename__ = "jobs"
+    __table_args__ = (
+        # Create index on content_hash for faster duplicate detection
+        Index('idx_content_hash', 'content_hash'),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     title = Column(String, nullable=False)
@@ -37,6 +41,7 @@ class DBJob(Base):
     company_highlights = Column(JSON, default=list)
     model_provider = Column(String, nullable=True)  # "claude" or "gemini"
     status = Column(String, default="pending")
+    content_hash = Column(String, nullable=True)  # Hash of job content for duplicate detection
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -46,6 +51,11 @@ class DBJob(Base):
 class DBCandidate(Base):
     """Candidate database model"""
     __tablename__ = "candidates"
+    __table_args__ = (
+        # Ensure each candidate (username) appears only once per job
+        # This prevents duplicate candidates when re-running the same job
+        Index('idx_job_username', 'job_id', 'username', unique=True),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     job_id = Column(String, ForeignKey("jobs.id"), nullable=False)
