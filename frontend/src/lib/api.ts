@@ -54,6 +54,11 @@ export const jobsApi = {
     const response = await apiClient.post<JobResponse>(`/api/jobs/${jobId}/start`)
     return response.data
   },
+
+  findMore: async (jobId: Job['id']): Promise<JobResponse> => {
+    const response = await apiClient.post<JobResponse>(`/api/jobs/${jobId}/find-more`)
+    return response.data
+  },
 }
 
 export const candidatesApi = {

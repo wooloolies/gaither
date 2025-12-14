@@ -134,14 +134,16 @@ class GitHubService:
     async def search_users(
         self,
         query: str,
-        per_page: int = 20
+        per_page: int = 20,
+        page: int = 1
     ) -> List[Dict[str, Any]]:
         """
         Search for GitHub users.
 
         Args:
             query: Search query (e.g., "language:python location:sf")
-            per_page: Number of results
+            per_page: Number of results per page
+            page: Page number (1-indexed)
 
         Returns:
             List of user data
@@ -149,7 +151,7 @@ class GitHubService:
         try:
             response = await self.client.get(
                 f"{self.base_url}/search/users",
-                params={"q": query, "per_page": per_page}
+                params={"q": query, "per_page": per_page, "page": page}
             )
 
             if response.status_code == 200:
