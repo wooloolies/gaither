@@ -16,5 +16,9 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 24 * 7, // 7 days - matches session expiry
     },
   },
-})
+  trustedOrigins: [
+    'https://gaither.vercel.app',
+    'http://localhost:5173',
+  ],
+});
 
