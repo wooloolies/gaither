@@ -16,6 +16,9 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [dimensions, setDimensions] = useState({ width: 800, height })
+    const [selectedRepo, setSelectedRepo] = useState<any>(null)
+    const [repoAnalysis, setRepoAnalysis] = useState<string | null>(null)
+    const [isAnalyzing, setIsAnalyzing] = useState(false)
     const graphRef = useRef<any>(null)
     const containerRef = useRef<HTMLDivElement>(null)
 
@@ -228,9 +231,8 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                     // Check if this is a Repo node
                     const isRepo = node.labels?.includes('Repo') || node.label === 'Repo'
                     if (isRepo && node.name) {
-                        // Construct GitHub URL from node name and open in new tab
-                        const githubUrl = `https://github.com/${node.name}`
-                        window.open(githubUrl, '_blank', 'noopener,noreferrer')
+                        setSelectedRepo(node)
+                        setRepoAnalysis(null) // Reset analysis
                     }
                 }}
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
@@ -322,8 +324,175 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                     }
                 }}
             />
+
+            {/* Fetch Analysis Effect */}
+            {selectedRepo && (
+                <RepoAnalysisFetcher
+                    repoName={selectedRepo.name}
+                    onAnalysisComplete={setRepoAnalysis}
+                    onAnalyzing={setIsAnalyzing}
+                />
+            )}
+
+            {/* Repo Details Modal */}
+            {selectedRepo && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }} onClick={() => setSelectedRepo(null)}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '24px',
+                        borderRadius: '8px',
+                        width: '500px',
+                        maxWidth: '90%',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        position: 'relative'
+                    }} onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setSelectedRepo(null)}
+                            style={{
+                                position: 'absolute',
+                                top: '12px',
+                                right: '12px',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '20px',
+                                cursor: 'pointer',
+                                color: '#666'
+                            }}
+                        >
+                            ×
+                        </button>
+
+                        <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>
+                            {selectedRepo.name}
+                        </h2>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <a
+                                href={`https://github.com/${selectedRepo.name}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '8px 16px',
+                                    backgroundColor: '#24292e',
+                                    color: 'white',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: 500
+                                }}
+                            >
+                                <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                                </svg>
+                                Open in GitHub
+                            </a>
+                        </div>
+
+                        <div>
+                            <label style={{
+                                display: 'block',
+                                marginBottom: '8px',
+                                fontWeight: 500,
+                                color: '#555',
+                                fontSize: '14px'
+                            }}>
+                                Repository Analysis
+                            </label>
+                            <div style={{
+                                width: '100%',
+                                minHeight: '120px',
+                                padding: '12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '6px',
+                                backgroundColor: '#f8f9fa',
+                                color: selectedRepo.analysis || selectedRepo.description ? '#333' : '#999',
+                                fontSize: '14px',
+                                lineHeight: '1.5',
+                                whiteSpace: 'pre-wrap'
+                            }}>
+                                {isAnalyzing ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#666' }}>
+                                        <div className="spinner" style={{
+                                            border: '3px solid #f3f3f3',
+                                            borderTop: '3px solid #3498db',
+                                            borderRadius: '50%',
+                                            width: '20px',
+                                            height: '20px',
+                                            animation: 'spin 1s linear infinite'
+                                        }} />
+                                        Analyzing repository content...
+                                    </div>
+                                ) : (
+                                    repoAnalysis || selectedRepo.analysis || selectedRepo.description || "No analysis available."
+                                )}
+                            </div>
+                            <style jsx>{`
+                                @keyframes spin {
+                                    0% { transform: rotate(0deg); }
+                                    100% { transform: rotate(360deg); }
+                                }
+                            `}</style>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
+}
+
+function RepoAnalysisFetcher({ repoName, onAnalysisComplete, onAnalyzing }: {
+    repoName: string,
+    onAnalysisComplete: (analysis: string) => void,
+    onAnalyzing: (isAnalyzing: boolean) => void
+}) {
+    useEffect(() => {
+        let mounted = true
+
+        async function analyze() {
+            // Basic valid format check
+            if (!repoName || !repoName.includes('/')) return
+
+            onAnalyzing(true)
+            try {
+                const res = await fetch('http://localhost:8000/api/analysis/repo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repo_url: `github.com/${repoName}` })
+                })
+
+                if (res.ok) {
+                    const data = await res.json()
+                    if (mounted && data.analysis) {
+                        onAnalysisComplete(data.analysis)
+                    }
+                } else {
+                    if (mounted) onAnalysisComplete("Failed to fetch analysis.")
+                }
+            } catch (err) {
+                if (mounted) onAnalysisComplete("Error connecting to analysis service.")
+            } finally {
+                if (mounted) onAnalyzing(false)
+            }
+        }
+
+        analyze()
+        return () => { mounted = false }
+    }, [repoName])
+
+    return null
 }
 
 export default CandidateGraph

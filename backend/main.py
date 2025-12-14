@@ -22,7 +22,7 @@ from services.weaviate import get_weaviate_service
 from services.websocket_manager import ws_manager
 from services.weaviate import get_weaviate_service
 from agents.orchestrator import orchestrator
-from api.neo4j_routes import router as neo4j_router
+from api import neo4j_routes, analysis_routes
 import asyncio
 
 # Configure logging
@@ -45,8 +45,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(neo4j_router)
-
+app.include_router(neo4j_routes.router)
+app.include_router(analysis_routes.router, tags=["analysis"])
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():

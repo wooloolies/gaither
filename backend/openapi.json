@@ -190,6 +190,48 @@
         }
       }
     },
+    "/api/analysis/repo": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyze Repo",
+        "description": "Analyze a GitHub repository using LLM.",
+        "operationId": "analyze_repo_api_analysis_repo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepoAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -1060,6 +1102,32 @@
         ],
         "title": "OutreachMessage",
         "description": "Outreach message schema"
+      },
+      "RepoAnalysisRequest": {
+        "properties": {
+          "repo_url": {
+            "type": "string",
+            "title": "Repo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "repo_url"
+        ],
+        "title": "RepoAnalysisRequest"
+      },
+      "RepoAnalysisResponse": {
+        "properties": {
+          "analysis": {
+            "type": "string",
+            "title": "Analysis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis"
+        ],
+        "title": "RepoAnalysisResponse"
       },
       "ValidationError": {
         "properties": {
