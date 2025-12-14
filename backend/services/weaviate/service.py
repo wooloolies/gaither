@@ -151,6 +151,39 @@ class WeaviateService:
             logger.error(f"Failed to setup schema: {e}")
             raise
 
+    def get_candidate_by_id(self, candidate_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a candidate by their candidate_id.
+
+        Args:
+            candidate_id: Unique candidate ID from database
+
+        Returns:
+            Candidate data with Weaviate UUID if found, None otherwise
+        """
+        try:
+            collection = self.client.collections.get(self.COLLECTION_NAME)
+
+            # Query for candidate by candidateId
+            response = collection.query.fetch_objects(
+                filters=Filter.by_property("candidateId").equal(candidate_id),
+                limit=1
+            )
+
+            if response.objects:
+                obj = response.objects[0]
+                return {
+                    "uuid": str(obj.uuid),
+                    "candidate_id": obj.properties.get("candidateId"),
+                    "job_id": obj.properties.get("jobId"),
+                    "username": obj.properties.get("username"),
+                }
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to get candidate {candidate_id}: {e}")
+            return None
+
     def store_candidate(
         self,
         candidate_id: str,
@@ -165,7 +198,8 @@ class WeaviateService:
         bio: Optional[str] = None,
     ) -> str:
         """
-        Store a candidate's embedding in Weaviate.
+        Store a candidate's embedding in Weaviate with duplicate prevention.
+        If candidate already exists, updates the existing record instead of creating a new one.
 
         Args:
             candidate_id: Unique candidate ID
@@ -180,7 +214,7 @@ class WeaviateService:
             bio: Candidate bio
 
         Returns:
-            UUID of the stored object in Weaviate
+            UUID of the stored/updated object in Weaviate
         """
         try:
             collection = self.client.collections.get(self.COLLECTION_NAME)
@@ -189,24 +223,37 @@ class WeaviateService:
             strengths_text = " | ".join(strengths) if strengths else ""
             concerns_text = " | ".join(concerns) if concerns else ""
 
-            # Insert the candidate data
-            uuid = collection.data.insert(
-                properties={
-                    "candidateId": candidate_id,
-                    "jobId": job_id,
-                    "username": username,
-                    "profileUrl": profile_url,
-                    "strengths": strengths_text,
-                    "concerns": concerns_text,
-                    "skills": skills,
-                    "fitScore": fit_score,
-                    "location": location or "",
-                    "bio": bio or "",
-                }
-            )
+            # Prepare properties
+            properties = {
+                "candidateId": candidate_id,
+                "jobId": job_id,
+                "username": username,
+                "profileUrl": profile_url,
+                "strengths": strengths_text,
+                "concerns": concerns_text,
+                "skills": skills,
+                "fitScore": fit_score,
+                "location": location or "",
+                "bio": bio or "",
+            }
 
-            logger.info(f"Stored candidate {username} (ID: {candidate_id}) in Weaviate")
-            return str(uuid)
+            # Check if candidate already exists
+            existing = self.get_candidate_by_id(candidate_id)
+
+            if existing:
+                # Update existing candidate
+                uuid = existing["uuid"]
+                collection.data.update(
+                    uuid=uuid,
+                    properties=properties
+                )
+                logger.info(f"Updated candidate {username} (ID: {candidate_id}) in Weaviate")
+                return uuid
+            else:
+                # Insert new candidate
+                uuid = collection.data.insert(properties=properties)
+                logger.info(f"Stored new candidate {username} (ID: {candidate_id}) in Weaviate")
+                return str(uuid)
 
         except Exception as e:
             logger.error(f"Failed to store candidate {candidate_id}: {e}")
