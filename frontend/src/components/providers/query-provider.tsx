@@ -9,7 +9,14 @@ function makeQueryClient() {
       queries: {
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000,
+        staleTime: 0,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+      },
+      mutations: {
+        // Default mutation options for form submissions
+        retry: 1,
+        retryDelay: 1000,
       },
     },
   })
@@ -44,3 +51,4 @@ export function QueryProvider({ children }: Readonly<{ children: React.ReactNode
     </QueryClientProvider>
   )
 }
+
