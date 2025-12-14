@@ -47,7 +47,8 @@ class Settings:
 
     # Gemini Configuration
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")  # lite = 15 RPM, flash = 5 RPM
+    GEMINI_FREE_TIER: bool = os.getenv("GEMINI_FREE_TIER", "false").lower() == "true"  # Enable rate limiting for free tier
 
     def validate(self):
         """Validate that required settings are present"""

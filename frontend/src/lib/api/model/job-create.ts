@@ -7,6 +7,15 @@
  */
 import type { JobCreateLocation } from './job-create-location';
 import type { JobCreateModelProvider } from './job-create-model-provider';
+import type { JobCreateRecruiterName } from './job-create-recruiter-name';
+import type { JobCreateLanguageRequirement } from './job-create-language-requirement';
+import type { JobCreateKeyResponsibilities } from './job-create-key-responsibilities';
+import type { JobCreateCoreSkillRequirement } from './job-create-core-skill-requirement';
+import type { JobCreateFamiliarWith } from './job-create-familiar-with';
+import type { JobCreateWorkType } from './job-create-work-type';
+import type { JobCreateYearsOfExperience } from './job-create-years-of-experience';
+import type { JobCreateMinimumRequiredDegree } from './job-create-minimum-required-degree';
+import type { JobCreateGrade } from './job-create-grade';
 
 /**
  * Schema for creating a new job
@@ -19,10 +28,19 @@ export interface JobCreate {
   title: string;
   /** @minLength 10 */
   description: string;
-  requirements?: string[];
-  location?: JobCreateLocation;
   /** @minLength 1 */
   company_name: string;
+  requirements?: string[];
+  location?: JobCreateLocation;
   company_highlights?: string[];
   model_provider?: JobCreateModelProvider;
+  recruiter_name?: JobCreateRecruiterName;
+  language_requirement?: JobCreateLanguageRequirement;
+  key_responsibilities?: JobCreateKeyResponsibilities;
+  core_skill_requirement?: JobCreateCoreSkillRequirement;
+  familiar_with?: JobCreateFamiliarWith;
+  work_type?: JobCreateWorkType;
+  years_of_experience?: JobCreateYearsOfExperience;
+  minimum_required_degree?: JobCreateMinimumRequiredDegree;
+  grade?: JobCreateGrade;
 }

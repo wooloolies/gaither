@@ -30,7 +30,7 @@ export function TextField({
         type="text"
         id={field.name}
         {...(isInvalid ? { 'aria-invalid': true } : {})}
-        value={field.state.value}
+        value={field.state.value ?? ''}
         onChange={(e) => field.handleChange(e.target.value)}
         onBlur={field.handleBlur}
         className={cn(

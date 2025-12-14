@@ -1,8 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
-import IntroSection from '@/features/About/components/intro-section'
-import AgentsSection from '@/features/About/components/agents-section'
+import IntroSection from '@/features/about/components/intro-section'
+import AgentsSection from '@/features/about/components/agents-section'
 
 export default function AboutPage() {
   const agentsSectionRef = useRef<HTMLElement>(null)

@@ -19,13 +19,27 @@ class JobCreate(BaseModel):
     """Schema for creating a new job"""
     model_config = ConfigDict(protected_namespaces=())
     
+    # Required fields
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=10)
+    company_name: str = Field(..., min_length=1)
+    
+    # Optional fields
     requirements: List[str] = Field(default_factory=list)
     location: Optional[str] = None
-    company_name: str = Field(..., min_length=1)
     company_highlights: List[str] = Field(default_factory=list)
     model_provider: Optional[str] = Field(default=None, pattern="^(claude|gemini)$")
+    
+    # Additional recruiter form fields
+    recruiter_name: Optional[str] = None
+    language_requirement: Optional[str] = None
+    key_responsibilities: Optional[str] = None
+    core_skill_requirement: Optional[str] = None
+    familiar_with: Optional[str] = None
+    work_type: Optional[str] = None
+    years_of_experience: Optional[int] = None
+    minimum_required_degree: Optional[str] = None
+    grade: Optional[int] = None
 
 
 class Job(JobCreate):

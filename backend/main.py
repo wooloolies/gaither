@@ -1,6 +1,8 @@
 """
 FastAPI main application with REST API and WebSocket endpoints.
 """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -19,8 +21,6 @@ from models import (
 )
 from services.websocket_manager import ws_manager
 from services.weaviate import get_weaviate_service
-from services.websocket_manager import ws_manager
-from services.weaviate import get_weaviate_service
 from agents.orchestrator import orchestrator
 from api.neo4j_routes import router as neo4j_router
 import asyncio
@@ -29,11 +29,44 @@ import asyncio
 logging.basicConfig(level=settings.LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown events"""
+    # Startup
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+
+    # Generate and save OpenAPI spec (only in non-production environments)
+    if settings.ENVIRONMENT != "production":
+        try:
+            openapi_spec = app.openapi()
+            backend_dir = Path(__file__).parent
+            openapi_path = backend_dir / "openapi.json"
+
+            with open(openapi_path, "w", encoding="utf-8") as f:
+                json.dump(openapi_spec, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"OpenAPI spec saved to {openapi_path}")
+        except Exception as e:
+            logger.error(f"Error generating OpenAPI spec: {e}")
+    else:
+        logger.debug("Skipping OpenAPI spec generation in production")
+
+    yield  # Application runs here
+
+    # Shutdown (cleanup if needed)
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Autonomous Recruiting Agent Swarm",
     description="AI-powered multi-agent system for recruiting",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -47,53 +80,27 @@ app.add_middleware(
 
 app.include_router(neo4j_router)
 
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database tables and generate OpenAPI spec on startup"""
-    try:
-        init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error(f"Error initializing database: {e}")
-    
-    # Generate and save OpenAPI spec (only in non-production environments)
-    if settings.ENVIRONMENT != "production":
-        try:
-            openapi_spec = app.openapi()
-            backend_dir = Path(__file__).parent
-            openapi_path = backend_dir / "openapi.json"
-            
-            with open(openapi_path, "w", encoding="utf-8") as f:
-                json.dump(openapi_spec, f, indent=2, ensure_ascii=False)
-            
-            logger.info(f"OpenAPI spec saved to {openapi_path}")
-        except Exception as e:
-            logger.error(f"Error generating OpenAPI spec: {e}")
-    else:
-        logger.debug("Skipping OpenAPI spec generation in production")
-
 
 # Helper functions
 
-def calculate_job_content_hash(title: str, company_name: str, description: str, requirements: list) -> str:
+def calculate_job_content_hash(title: str, company_name: str, key_responsibilities: str = None) -> str:
     """
     Calculate a hash of job content for duplicate detection.
 
-    Uses SHA256 hash of normalized job content (title + company + description + requirements).
+    Uses SHA256 hash of normalized job content (title + company_name + key_responsibilities).
     This allows detecting duplicate jobs regardless of when they were created.
 
     Args:
         title: Job title
         company_name: Company name
-        description: Job description
-        requirements: List of requirements
+        key_responsibilities: Key responsibilities (job description)
 
     Returns:
         SHA256 hash string (hex)
     """
     # Normalize content (lowercase, strip whitespace)
-    content = f"{title.strip().lower()}|{company_name.strip().lower()}|{description.strip().lower()}|{'|'.join(sorted(r.strip().lower() for r in requirements))}"
+    key_resp = (key_responsibilities or "").strip().lower()
+    content = f"{title.strip().lower()}|{company_name.strip().lower()}|{key_resp}"
 
     # Calculate SHA256 hash
     return hashlib.sha256(content.encode('utf-8')).hexdigest()
@@ -121,12 +128,14 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         # Use provided model_provider or default to settings
         model_provider = job_data.model_provider or settings.MODEL_PROVIDER
 
-        # Calculate content hash for duplicate detection
+        # Use key_responsibilities for hash calculation, fallback to description if not provided
+        key_responsibilities = job_data.key_responsibilities or job_data.description
+
+        # Calculate content hash for duplicate detection (using title, company_name, key_responsibilities)
         content_hash = calculate_job_content_hash(
             title=job_data.title,
             company_name=job_data.company_name,
-            description=job_data.description,
-            requirements=job_data.requirements or []
+            key_responsibilities=key_responsibilities
         )
 
         # Check for duplicate jobs using content hash
@@ -150,6 +159,21 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
                 status=JobStatus(existing_job.status)
             )
 
+        # Prepare recruiter form data for storage
+        recruiter_form_data = {
+            "recruiter_name": job_data.recruiter_name,
+            "language_requirement": job_data.language_requirement,
+            "key_responsibilities": job_data.key_responsibilities,
+            "core_skill_requirement": job_data.core_skill_requirement,
+            "familiar_with": job_data.familiar_with,
+            "work_type": job_data.work_type,
+            "years_of_experience": job_data.years_of_experience,
+            "minimum_required_degree": job_data.minimum_required_degree,
+            "grade": job_data.grade,
+        }
+        # Remove None values
+        recruiter_form_data = {k: v for k, v in recruiter_form_data.items() if v is not None}
+
         # Create new job with content hash
         db_job = DBJob(
             title=job_data.title,
@@ -160,7 +184,8 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
             company_highlights=job_data.company_highlights,
             model_provider=model_provider,
             content_hash=content_hash,
-            status=JobStatus.PENDING.value
+            status=JobStatus.PENDING.value,
+            recruiter_form_data=recruiter_form_data if recruiter_form_data else None
         )
 
         db.add(db_job)
@@ -249,6 +274,7 @@ async def start_job(job_id: str, db: Session = Depends(get_db)):
     logger.info(f"Starting agent pipeline for job {job_id}")
 
     # Prepare job data for agents
+    recruiter_data = db_job.recruiter_form_data or {}
     job_data = {
         "title": db_job.title,
         "description": db_job.description,
@@ -256,7 +282,18 @@ async def start_job(job_id: str, db: Session = Depends(get_db)):
         "location": db_job.location,
         "company_name": db_job.company_name,
         "company_highlights": db_job.company_highlights or [],
-        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER
+        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER,
+        # Include key_responsibilities from recruiter form data, fallback to description
+        "key_responsibilities": recruiter_data.get("key_responsibilities") or db_job.description,
+        # Include other recruiter form fields
+        "recruiter_name": recruiter_data.get("recruiter_name"),
+        "language_requirement": recruiter_data.get("language_requirement"),
+        "core_skill_requirement": recruiter_data.get("core_skill_requirement"),
+        "familiar_with": recruiter_data.get("familiar_with"),
+        "work_type": recruiter_data.get("work_type"),
+        "years_of_experience": recruiter_data.get("years_of_experience"),
+        "minimum_required_degree": recruiter_data.get("minimum_required_degree"),
+        "grade": recruiter_data.get("grade"),
     }
 
     # Start agent orchestrator in background
@@ -306,6 +343,7 @@ async def find_more_candidates(job_id: str, db: Session = Depends(get_db)):
     logger.info(f"Finding more candidates for job {job_id}")
 
     # Prepare job data for agents
+    recruiter_data = db_job.recruiter_form_data or {}
     job_data = {
         "title": db_job.title,
         "description": db_job.description,
@@ -313,7 +351,18 @@ async def find_more_candidates(job_id: str, db: Session = Depends(get_db)):
         "location": db_job.location,
         "company_name": db_job.company_name,
         "company_highlights": db_job.company_highlights or [],
-        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER
+        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER,
+        # Include key_responsibilities from recruiter form data, fallback to description
+        "key_responsibilities": recruiter_data.get("key_responsibilities") or db_job.description,
+        # Include other recruiter form fields
+        "recruiter_name": recruiter_data.get("recruiter_name"),
+        "language_requirement": recruiter_data.get("language_requirement"),
+        "core_skill_requirement": recruiter_data.get("core_skill_requirement"),
+        "familiar_with": recruiter_data.get("familiar_with"),
+        "work_type": recruiter_data.get("work_type"),
+        "years_of_experience": recruiter_data.get("years_of_experience"),
+        "minimum_required_degree": recruiter_data.get("minimum_required_degree"),
+        "grade": recruiter_data.get("grade"),
     }
 
     # Start agent orchestrator in background
