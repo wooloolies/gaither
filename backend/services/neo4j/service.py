@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional
 from dataclasses import asdict
 from neo4j import GraphDatabase
 from loguru import logger
-from backend.services.neo4j.models.neo4j_models import CandidateGraph, CandidatePath, Neo4jNode, Neo4jRelationship
-from backend.services.neo4j.models.neo4j_candidate import Neo4jCandidate
+from .models.neo4j_models import CandidateGraph, CandidatePath, Neo4jNode, Neo4jRelationship
+from .models.neo4j_candidate import Neo4jCandidate
 
 
 class Neo4jService:

@@ -6,6 +6,190 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/neo4j/candidates": {
+      "get": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Get All Candidates Graph",
+        "description": "Get a snapshot of the candidate graph.\nReturns nodes and links formatted for react-force-graph-2d.",
+        "operationId": "get_all_candidates_graph_api_neo4j_candidates_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForceGraphData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/candidates/{username_or_id}": {
+      "get": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Get Candidate Graph",
+        "description": "Get the graph for a specific candidate by username or ID.\nReturns nodes and links formatted for react-force-graph-2d.",
+        "operationId": "get_candidate_graph_api_neo4j_candidates__username_or_id__get",
+        "parameters": [
+          {
+            "name": "username_or_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username Or Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForceGraphData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/candidates/{candidate_id}": {
+      "delete": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Delete Candidate",
+        "description": "Delete a candidate node and its relationships.",
+        "operationId": "delete_candidate_api_neo4j_candidates__candidate_id__delete",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/graph/filter": {
+      "get": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Get Graph By Filter",
+        "description": "Get graph centered around a specific entity (Skill, Location, etc.).\nReturns nodes and links formatted for react-force-graph-2d.",
+        "operationId": "get_graph_by_filter_api_neo4j_graph_filter_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Filter type: skill, location, education, repo",
+              "title": "Type"
+            },
+            "description": "Filter type: skill, location, education, repo"
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Value to filter by (e.g., 'Python', 'Thailand')",
+              "title": "Value"
+            },
+            "description": "Value to filter by (e.g., 'Python', 'Thailand')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForceGraphData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -579,6 +763,75 @@
         ],
         "title": "CandidateAnalysis",
         "description": "Candidate analysis results"
+      },
+      "ForceGraphData": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/GraphLink"
+            },
+            "type": "array",
+            "title": "Links"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "links"
+        ],
+        "title": "ForceGraphData",
+        "description": "Complete graph data format for frontend."
+      },
+      "GraphLink": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "type"
+        ],
+        "title": "GraphLink",
+        "description": "Link structure for react-force-graph."
+      },
+      "GraphNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "GraphNode",
+        "description": "Node structure for react-force-graph."
       },
       "HTTPValidationError": {
         "properties": {
