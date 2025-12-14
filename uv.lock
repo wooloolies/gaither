@@ -365,6 +365,7 @@ requires-dist = [
     { name = "fastapi", specifier = "==0.104.1" },
     { name = "google-genai", specifier = ">=1.2.0" },
     { name = "httpx", specifier = "==0.26.0" },
+    { name = "loguru", specifier = "==0.7.3" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "neo4j", specifier = ">=5.14.0" },
     { name = "polars", specifier = ">=1.36.1" },
