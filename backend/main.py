@@ -15,6 +15,7 @@ from models import (
     OutreachMessage, JobStartResponse
 )
 from services.websocket_manager import ws_manager
+from services.weaviate import get_weaviate_service
 from agents.orchestrator import orchestrator
 import asyncio
 
@@ -273,6 +274,115 @@ async def get_candidate_message(candidate_id: str, db: Session = Depends(get_db)
         generated_at=db_message.generated_at
     )
 
+
+# Semantic search endpoints (Weaviate)
+
+@app.get("/api/search/candidates")
+async def search_candidates_by_strengths(
+    query: str,
+    limit: int = 10
+):
+    """
+    Search candidates using semantic similarity across ALL jobs.
+
+    This endpoint searches the entire candidate pool globally, not filtered by job.
+    A candidate who applied for one position might be perfect for another based on
+    their strengths and skills.
+
+    Args:
+        query: Natural language query describing desired candidate strengths (min 3 chars)
+        limit: Maximum number of results (default 10, max 100)
+
+    Returns:
+        List of candidates ranked by similarity across all jobs
+    """
+    # Input validation
+    if not query or len(query.strip()) < 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Query must be at least 3 characters long"
+        )
+
+    if limit < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Limit must be at least 1"
+        )
+    try:
+        # Run blocking Weaviate operations in thread pool to avoid blocking event loop
+        # get_weaviate_service() can block during initialization (connection setup)
+        weaviate_service = await asyncio.to_thread(get_weaviate_service)
+
+        # search_by_strengths() performs blocking I/O (network calls to Weaviate)
+        results = await asyncio.to_thread(
+            weaviate_service.search_by_strengths,
+            query=query.strip(),
+            limit=limit
+        )
+
+        return {
+            "query": query.strip(),
+            "total_results": len(results),
+            "candidates": results
+        }
+    except ValueError as e:
+        # Configuration errors (missing env vars, etc.)
+        logger.error(f"Weaviate configuration error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Vector search is not configured. Please check Weaviate settings."
+        )
+    except ConnectionError as e:
+        # Weaviate service unavailable
+        logger.error(f"Weaviate connection error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Vector search service is temporarily unavailable"
+        )
+    except Exception as e:
+        # Other unexpected errors
+        logger.error(f"Error searching candidates: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while searching candidates"
+        )
+
+
+@app.get("/api/vector/candidates")
+async def get_vector_candidates(
+    job_id: str,
+    min_fit_score: int = None
+):
+    """
+    Get all candidates for a job from Weaviate vector database.
+
+    Args:
+        job_id: Job ID to filter by (required)
+        min_fit_score: Minimum fit score threshold (optional)
+
+    Returns:
+        List of candidates from vector database
+    """
+    try:
+        # Run blocking Weaviate operations in thread pool to avoid blocking event loop
+        weaviate_service = await asyncio.to_thread(get_weaviate_service)
+
+        # get_candidates_by_job() performs blocking I/O (network calls to Weaviate)
+        results = await asyncio.to_thread(
+            weaviate_service.get_candidates_by_job,
+            job_id=job_id,
+            min_fit_score=min_fit_score
+        )
+
+        return {
+            "job_id": job_id,
+            "min_fit_score": min_fit_score,
+            "total_results": len(results),
+            "candidates": results
+        }
+    except Exception as e:
+        logger.error(f"Error retrieving candidates from vector database: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # WebSocket endpoint
 

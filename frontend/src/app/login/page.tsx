@@ -7,22 +7,22 @@ export default function LoginPage() {
   const handleGitHubSignIn = async () => {
     await signIn.social({
       provider: "github",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     })
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="mx-auto w-full max-w-md space-y-6 p-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold">Welcome to Gaither</h1>
+          <h1 className="text-3xl font-bold text-foreground">Welcome to Gaither</h1>
           <p className="text-muted-foreground">
             Sign in to access your dashboard
           </p>
         </div>
         <Button
           onClick={handleGitHubSignIn}
-          className="w-full"
+          className="w-full cursor-pointer"
           size="lg"
         >
           <svg
@@ -43,3 +43,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

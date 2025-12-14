@@ -13,7 +13,12 @@ class ApifyService:
     """Service for interacting with Apify actors"""
 
     def __init__(self):
-        self.client = ApifyClient(settings.APIFY_API_TOKEN)
+        # APIFY_API_TOKEN is optional - if not provided, client will be None
+        if settings.APIFY_API_TOKEN:
+            self.client = ApifyClient(settings.APIFY_API_TOKEN)
+        else:
+            self.client = None
+            logger.warning("APIFY_API_TOKEN not configured - Apify features will be disabled")
 
     async def scrape_github_profiles(
         self,
@@ -30,6 +35,10 @@ class ApifyService:
         Returns:
             List of profile data
         """
+        if not self.client:
+            logger.warning("Apify client not available - APIFY_API_TOKEN not configured")
+            return []
+
         try:
             logger.info(f"Starting Apify GitHub scrape: {search_query}")
 
@@ -68,6 +77,10 @@ class ApifyService:
         Returns:
             List of profile data
         """
+        if not self.client:
+            logger.warning("Apify client not available - APIFY_API_TOKEN not configured")
+            return []
+        
         logger.warning("LinkedIn scraping not implemented yet")
         return []
 

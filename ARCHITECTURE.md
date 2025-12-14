@@ -1,19 +1,72 @@
 # Architecture Documentation
 
 ## Table of Contents
-1. [System Overview](#system-overview)
-2. [Architecture Flowcharts](#architecture-flowcharts)
-3. [Architecture Patterns](#architecture-patterns)
-4. [System Architecture](#system-architecture)
-5. [Component Breakdown](#component-breakdown)
-6. [Data Flow](#data-flow)
-7. [Technology Stack](#technology-stack)
-8. [Agent System](#agent-system)
-9. [API Architecture](#api-architecture)
-10. [Frontend Architecture](#frontend-architecture)
-11. [Database Schema](#database-schema)
-12. [Communication Patterns](#communication-patterns)
-13. [Deployment Architecture](#deployment-architecture)
+1. [Production Architecture](#production-architecture)
+2. [System Overview](#system-overview)
+3. [Architecture Flowcharts](#architecture-flowcharts)
+4. [Architecture Patterns](#architecture-patterns)
+5. [System Architecture](#system-architecture)
+6. [Component Breakdown](#component-breakdown)
+7. [Data Flow](#data-flow)
+8. [Technology Stack](#technology-stack)
+9. [Agent System](#agent-system)
+10. [API Architecture](#api-architecture)
+11. [Frontend Architecture](#frontend-architecture)
+12. [Database Schema](#database-schema)
+13. [Communication Patterns](#communication-patterns)
+14. [Deployment Architecture](#deployment-architecture)
+
+---
+
+## Production Architecture
+
+### Production Infrastructure
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend"]
+        Vercel[Vercel<br/>React Frontend]
+    end
+    
+    subgraph Backend["Backend Services"]
+        Render[Render<br/>FastAPI Backend]
+    end
+    
+    subgraph Databases["Databases"]
+        Neo4j[(Neo4j<br/>Graph Database)]
+        Weaviate[(Weaviate<br/>Vector Database)]
+    end
+    
+    subgraph AI["AI Services"]
+        LLM{Gemini or<br/>Claude}
+    end
+    
+    subgraph External["External APIs"]
+        GitHub[GitHub API]
+    end
+    
+    Vercel -->|HTTPS| Render
+    Render -->|Query| Neo4j
+    Render -->|Vector Search| Weaviate
+    Render -->|AI Requests| LLM
+    Render -->|API Calls| GitHub
+    
+    style Vercel fill:#000,color:#fff
+    style Render fill:#0ea5e9,color:#fff
+    style Neo4j fill:#008cc1,color:#fff
+    style Weaviate fill:#4f46e5,color:#fff
+    style LLM fill:#f59e0b,color:#fff
+    style GitHub fill:#24292e,color:#fff
+```
+
+### Component Overview
+
+- **Vercel**: Frontend hosting and deployment
+- **Render**: Backend API server hosting
+- **Neo4j**: Graph database for relationship data
+- **Weaviate**: Vector database for semantic search
+- **Gemini/Claude**: AI/LLM services for analysis and generation
+- **GitHub**: External API for candidate discovery
 
 ---
 

@@ -1,7 +1,7 @@
 """
 Pydantic models for API request/response validation.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -17,6 +17,8 @@ class JobStatus(str, Enum):
 
 class JobCreate(BaseModel):
     """Schema for creating a new job"""
+    model_config = ConfigDict(protected_namespaces=())
+    
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=10)
     requirements: List[str] = Field(default_factory=list)
