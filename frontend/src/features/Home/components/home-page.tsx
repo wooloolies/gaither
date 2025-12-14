@@ -1,9 +1,16 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import DocumentSwirl from '@/components/document-swirl'
 
-export default function LandingPage() {
+export default function HomePage() {
+  const router = useRouter()
+
+  const handleHireNow = () => {
+    router.push('/hire')
+  }
+
   return (
     <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
 
@@ -33,7 +40,8 @@ export default function LandingPage() {
         {/* CTA Button */}
         <div className="mt-20 md:mt-28">
           <Button
-            className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black"
+            onClick={handleHireNow}
+            className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black cursor-pointer"
           >
             Hire Now
           </Button>

@@ -40,7 +40,7 @@ export default function LoginPage() {
           >
             <SiLinkedin className="mr-2 h-5 w-5 flex-shrink-0" />
             <span className="text-sm sm:text-base whitespace-normal text-center">
-              Continue with LinkedIn as Recruiter
+              Continue with LinkedIn
             </span>
           </Button>
           <Button
@@ -50,7 +50,7 @@ export default function LoginPage() {
           >
             <SiGithub className="mr-2 h-5 w-5 flex-shrink-0" />
             <span className="text-sm sm:text-base whitespace-normal text-center">
-              Continue with GitHub as Candidate
+              Continue with GitHub
             </span>
           </Button>
         </div>
