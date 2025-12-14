@@ -54,8 +54,6 @@ class Settings:
 
         # Common required API keys
         missing = []
-        if not self.APIFY_API_TOKEN:
-            missing.append("APIFY_API_TOKEN")
         if not self.GITHUB_TOKEN:
             missing.append("GITHUB_TOKEN")
 
