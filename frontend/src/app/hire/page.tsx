@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { jobsApi } from '@/lib/api'
 import { useAgentStore } from '@/store/agent-store'
 import { useEffect, useState } from 'react'
-import { getErrorMessage } from '@/lib/utils'
 
 export default function HirePage() {
   const router = useRouter()
@@ -182,436 +181,182 @@ export default function HirePage() {
               {/* Model Selection and Grade */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Model Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Model <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="model">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <select
-                            id="model"
-                            aria-label="Model selection"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                            value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value as 'recommend' | 'good-for')}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                        >
-                          <option value="recommend">Recommend</option>
-                          <option value="good-for">Good For...</option>
-                        </select>
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="model">
+                  {(field) => (
+                    <field.SelectField
+                      label="Model"
+                      required
+                      ariaLabel="Model selection"
+                      options={[
+                        { value: 'recommend' as const, label: 'Recommend' },
+                        { value: 'good-for' as const, label: 'Good For...' },
+                      ]}
+                    />
+                  )}
+                </form.AppField>
 
                 {/* Grade */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Grade <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="grade">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="number"
-                            id="grade"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(Number(e.target.value))}
-                          onBlur={field.handleBlur}
-                          min="50"
-                          max="100"
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="50-100"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="grade">
+                  {(field) => (
+                    <field.NumberField
+                      label="Grade"
+                      required
+                      min={50}
+                      max={100}
+                      placeholder="50-100"
+                    />
+                  )}
+                </form.AppField>
               </div>
 
               {/* Recruiter Name and Target Role Title */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Recruiter Name */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Your Name <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="recruiterName">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="recruiterName"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="Enter your name"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="recruiterName">
+                  {(field) => (
+                    <field.TextField
+                      label="Your Name"
+                      required
+                      placeholder="Enter your name"
+                    />
+                  )}
+                </form.AppField>
 
                 {/* Target Role Title */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Target Role Title <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="targetRoleTitle">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="targetRoleTitle"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="e.g. Senior Software Engineer"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="targetRoleTitle">
+                  {(field) => (
+                    <field.TextField
+                      label="Target Role Title"
+                      required
+                      placeholder="e.g. Senior Software Engineer"
+                    />
+                  )}
+                </form.AppField>
               </div>
 
               {/* Company Identifier and Language Requirement */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Company Identifier */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Company Identifier <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="companyIdentifier">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="companyIdentifier"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="Your company name"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="companyIdentifier">
+                  {(field) => (
+                    <field.TextField
+                      label="Company Identifier"
+                      required
+                      placeholder="Your company name"
+                    />
+                  )}
+                </form.AppField>
 
                 {/* Language Requirement */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Language Requirement <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="languageRequirement">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="languageRequirement"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="e.g. English, Spanish"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="languageRequirement">
+                  {(field) => (
+                    <field.TextField
+                      label="Language Requirement"
+                      required
+                      placeholder="e.g. English, Spanish"
+                    />
+                  )}
+                </form.AppField>
               </div>
 
               {/* Key Responsibilities */}
-              <div>
-                <label className="block text-sm font-medium mb-2 text-foreground">
-                  Key Responsibilities <span className="text-destructive">*</span>
-                </label>
-                <form.Field name="keyResponsibilities">
-                  {(field) => {
-                    const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                    return (
-                      <div>
-                        <textarea
-                          id="keyResponsibilities"
-                          {...(isInvalid ? { 'aria-invalid': true } : {})}
-                        value={field.state.value}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        onBlur={field.handleBlur}
-                        rows={6}
-                        className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors resize-y"
-                        placeholder="What are you expecting them to do?"
-                      />
-                      {field.state.meta.errors.length > 0 && (
-                        <p className="text-sm text-destructive mt-1">
-                          {getErrorMessage(field.state.meta.errors[0])}
-                        </p>
-                      )}
-                    </div>
-                    )
-                  }}
-                </form.Field>
-              </div>
+              <form.AppField name="keyResponsibilities">
+                {(field) => (
+                  <field.TextareaField
+                    label="Key Responsibilities"
+                    required
+                    rows={6}
+                    placeholder="What are you expecting them to do?"
+                  />
+                )}
+              </form.AppField>
 
               {/* Core Skill Requirement and Familiar With */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Core Skill Requirement */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Core Skill Requirement <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="coreSkillRequirement">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="coreSkillRequirement"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="e.g. Python, SQL, React"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="coreSkillRequirement">
+                  {(field) => (
+                    <field.TextField
+                      label="Core Skill Requirement"
+                      required
+                      placeholder="e.g. Python, SQL, React"
+                    />
+                  )}
+                </form.AppField>
 
                 {/* Familiar With */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    What are they familiar with? <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="familiarWith">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="familiarWith"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="e.g. AWS, Docker, Kubernetes"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="familiarWith">
+                  {(field) => (
+                    <field.TextField
+                      label="What are they familiar with?"
+                      required
+                      placeholder="e.g. AWS, Docker, Kubernetes"
+                    />
+                  )}
+                </form.AppField>
               </div>
 
               {/* Location and Work Type */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Location <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="location">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="location"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="e.g. San Francisco, CA"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="location">
+                  {(field) => (
+                    <field.TextField
+                      label="Location"
+                      required
+                      placeholder="e.g. San Francisco, CA"
+                    />
+                  )}
+                </form.AppField>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Work Type <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="workType">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <select
-                            id="workType"
-                            aria-label="Work type selection"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value as 'onsite' | 'hybrid' | 'remote')}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                        >
-                          <option value="onsite">Onsite</option>
-                          <option value="hybrid">Hybrid</option>
-                          <option value="remote">Remote</option>
-                        </select>
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="workType">
+                  {(field) => (
+                    <field.SelectField
+                      label="Work Type"
+                      required
+                      ariaLabel="Work type selection"
+                      options={[
+                        { value: 'onsite' as const, label: 'Onsite' },
+                        { value: 'hybrid' as const, label: 'Hybrid' },
+                        { value: 'remote' as const, label: 'Remote' },
+                      ]}
+                    />
+                  )}
+                </form.AppField>
               </div>
 
               {/* Years of Experience and Minimum Required Degree */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Years of Experience */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Years of Experience <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="yearsOfExperience">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="number"
-                            id="yearsOfExperience"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(Number(e.target.value))}
-                          onBlur={field.handleBlur}
-                          min="0"
-                          max="50"
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="0"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="yearsOfExperience">
+                  {(field) => (
+                    <field.NumberField
+                      label="Years of Experience"
+                      required
+                      min={0}
+                      max={50}
+                      placeholder="0"
+                    />
+                  )}
+                </form.AppField>
 
                 {/* Minimum Required Degree */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground">
-                    Minimum Required Degree <span className="text-destructive">*</span>
-                  </label>
-                  <form.Field name="minimumRequiredDegree">
-                    {(field) => {
-                      const isInvalid = !field.state.meta.isValid && field.state.meta.isTouched
-                      return (
-                        <div>
-                          <input
-                            type="text"
-                            id="minimumRequiredDegree"
-                            {...(isInvalid ? { 'aria-invalid': true } : {})}
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-colors"
-                          placeholder="e.g. Bachelor's degree in Computer Science"
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-destructive mt-1">
-                            {getErrorMessage(field.state.meta.errors[0])}
-                          </p>
-                        )}
-                      </div>
-                      )
-                    }}
-                  </form.Field>
-                </div>
+                <form.AppField name="minimumRequiredDegree">
+                  {(field) => (
+                    <field.TextField
+                      label="Minimum Required Degree"
+                      required
+                      placeholder="e.g. Bachelor's degree in Computer Science"
+                    />
+                  )}
+                </form.AppField>
               </div>
 
               {/* Submit Button */}
               <div className="pt-4 border-t border-border">
                 <form.Subscribe
                   selector={(state) => [state.canSubmit, state.isSubmitting]}
-                  children={([canSubmit, isSubmitting]) => (
+                >
+                  {([canSubmit, isSubmitting]) => (
                     <Button
                       type="submit"
                       disabled={!canSubmit || mutation.isPending || isSubmitting}
@@ -620,7 +365,7 @@ export default function HirePage() {
                       {mutation.isPending || isSubmitting ? 'Submitting...' : 'Submit Job Posting'}
                     </Button>
                   )}
-                />
+                </form.Subscribe>
                 {mutation.isError && (
                   <p className="text-sm text-destructive mt-2">
                     Error submitting form. Please try again.
