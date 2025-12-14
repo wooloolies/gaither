@@ -8,3 +8,5 @@ sqlalchemy==2.0.23
 pydantic==2.5.0
 python-dotenv==1.0.0
 websockets>=13.0
+neo4j>=5.14.0
+loguru
