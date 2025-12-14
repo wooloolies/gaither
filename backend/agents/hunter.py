@@ -3,6 +3,7 @@ Hunter Agent - Finds candidates matching job descriptions.
 """
 import asyncio
 import logging
+import random
 from typing import Dict, List, Any
 from agents.base import BaseAgent
 from services.llm import get_llm_service
@@ -22,7 +23,8 @@ class HunterAgent(BaseAgent):
         self,
         job_id: str,
         job_data: Dict[str, Any],
-        output_queue: asyncio.Queue
+        output_queue: asyncio.Queue,
+        existing_usernames: set = None
     ):
         """
         Find candidates matching the job description.
@@ -31,6 +33,7 @@ class HunterAgent(BaseAgent):
             job_id: The job ID
             job_data: Job description and requirements
             output_queue: Queue to send found candidates to Analyzer
+            existing_usernames: Set of usernames already found for this job (to exclude)
         """
         try:
             await self.emit_event(
@@ -47,7 +50,7 @@ class HunterAgent(BaseAgent):
             keywords = await self._extract_keywords(job_data)
 
             # Step 2: Search GitHub for candidates (multi-strategy)
-            candidates = await self._search_github(keywords)
+            candidates = await self._search_github(keywords, existing_usernames or set())
 
             # Step 3: Send candidates to analyzer queue
             for candidate in candidates:
@@ -198,7 +201,7 @@ Be specific and prioritize searchable, verifiable terms over generic description
                 "domain_keywords": []
             }
 
-    async def _search_github(self, keywords: Dict[str, List[str]]) -> List[Dict[str, Any]]:
+    async def _search_github(self, keywords: Dict[str, List[str]], existing_usernames: set = None) -> List[Dict[str, Any]]:
         """
         Advanced multi-strategy GitHub search to find highly relevant, active candidates.
 
@@ -211,12 +214,22 @@ Be specific and prioritize searchable, verifiable terms over generic description
 
         Args:
             keywords: Comprehensive extracted keywords from job description
+            existing_usernames: Set of usernames to exclude (already found for this job)
 
         Returns:
             List of high-quality candidate profile data (actual hireable individuals)
         """
         candidates = []
-        seen_usernames = set()
+        # Initialize with existing usernames to avoid re-finding the same candidates
+        seen_usernames = set(existing_usernames) if existing_usernames else set()
+
+        if seen_usernames:
+            logger.info(f"Excluding {len(seen_usernames)} existing candidates from search")
+
+        # Calculate which page to fetch based on number of existing candidates
+        # This helps get different results on subsequent runs
+        search_page = max(1, (len(seen_usernames) // 10) + 1)
+        logger.info(f"Using search page {search_page} to diversify results")
 
         try:
             # Extract keyword categories
@@ -226,6 +239,17 @@ Be specific and prioritize searchable, verifiable terms over generic description
             repo_topics = keywords.get("repository_topics", [])
             domain_keywords = keywords.get("domain_keywords", [])
             alt_terms = keywords.get("alternative_terms", [])
+
+            # Shuffle keyword lists to randomize search order
+            # This ensures different searches try different combinations
+            random.shuffle(core_languages)
+            random.shuffle(primary_frameworks)
+            random.shuffle(related_tech)
+            random.shuffle(repo_topics)
+            random.shuffle(domain_keywords)
+            random.shuffle(alt_terms)
+
+            logger.info("Randomized keyword order for diverse search results")
 
             # Get date threshold for account age filtering
             from datetime import datetime, timedelta
@@ -262,9 +286,9 @@ Be specific and prioritize searchable, verifiable terms over generic description
                         query_parts.append(_fmt_location(job_location))
 
                     query = " ".join(query_parts)
-                    logger.info(f"🔍 Strategy 1 (Topic + Activity): {query}")
+                    logger.info(f"🔍 Strategy 1 (Topic + Activity): {query} [page {search_page}]")
 
-                    users = await github_service.search_users(query, per_page=15)
+                    users = await github_service.search_users(query, per_page=15, page=search_page)
                     new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
                     candidates.extend(new_candidates)
 
@@ -294,9 +318,9 @@ Be specific and prioritize searchable, verifiable terms over generic description
                             query_parts.append(_fmt_location(job_location))
 
                         query = " ".join(query_parts)
-                        logger.info(f"🔍 Strategy 2 (Framework + Language): {query}")
+                        logger.info(f"🔍 Strategy 2 (Framework + Language): {query} [page {search_page}]")
 
-                        users = await github_service.search_users(query, per_page=10)
+                        users = await github_service.search_users(query, per_page=10, page=search_page)
                         new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
                         candidates.extend(new_candidates)
 
@@ -334,9 +358,9 @@ Be specific and prioritize searchable, verifiable terms over generic description
                         query_parts.append(_fmt_location(job_location))
 
                     query = " ".join(query_parts)
-                    logger.info(f"🔍 Strategy 3 (Domain Expertise): {query}")
+                    logger.info(f"🔍 Strategy 3 (Domain Expertise): {query} [page {search_page}]")
 
-                    users = await github_service.search_users(query, per_page=12)
+                    users = await github_service.search_users(query, per_page=12, page=search_page)
                     new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
                     candidates.extend(new_candidates)
 
@@ -366,9 +390,9 @@ Be specific and prioritize searchable, verifiable terms over generic description
                     query_parts.append(_fmt_location(job_location))
 
                 query = " ".join(query_parts)
-                logger.info(f"🔍 Strategy 4 (Tech Stack): {query}")
+                logger.info(f"🔍 Strategy 4 (Tech Stack): {query} [page {search_page}]")
 
-                users = await github_service.search_users(query, per_page=10)
+                users = await github_service.search_users(query, per_page=10, page=search_page)
                 new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
                 candidates.extend(new_candidates)
 
@@ -396,9 +420,9 @@ Be specific and prioritize searchable, verifiable terms over generic description
                         query_parts.append(_fmt_location(job_location))
 
                     query = " ".join(query_parts)
-                    logger.info(f"🔍 Strategy 5 (Alternative Terms): {query}")
+                    logger.info(f"🔍 Strategy 5 (Alternative Terms): {query} [page {search_page}]")
 
-                    users = await github_service.search_users(query, per_page=8)
+                    users = await github_service.search_users(query, per_page=8, page=search_page)
                     new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
                     candidates.extend(new_candidates)
 

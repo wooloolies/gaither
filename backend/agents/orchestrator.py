@@ -36,13 +36,22 @@ class RecruitingOrchestrator:
         try:
             logger.info(f"Starting recruiting pipeline for job {job_id}")
 
+            # Fetch existing candidates for this job to avoid duplicates
+            existing_candidates = db.query(DBCandidate).filter(
+                DBCandidate.job_id == job_id
+            ).all()
+            existing_usernames = {c.username for c in existing_candidates}
+
+            if existing_usernames:
+                logger.info(f"Found {len(existing_usernames)} existing candidates, will exclude them from search")
+
             # Create queues for agent communication
             hunter_to_analyzer_queue = asyncio.Queue()
             analyzer_to_engager_queue = asyncio.Queue()
 
             # Run all agents concurrently
             hunter_task = asyncio.create_task(
-                self.hunter.execute(job_id, job_data, hunter_to_analyzer_queue)
+                self.hunter.execute(job_id, job_data, hunter_to_analyzer_queue, existing_usernames)
             )
 
             analyzer_task = asyncio.create_task(

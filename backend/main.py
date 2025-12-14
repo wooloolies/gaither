@@ -278,6 +278,49 @@ async def run_pipeline_background(job_id: str, job_data: dict):
         db.close()
 
 
+@app.post("/api/jobs/{job_id}/find-more", response_model=JobStartResponse)
+async def find_more_candidates(job_id: str, db: Session = Depends(get_db)):
+    """
+    Find more candidates for an existing job.
+
+    This endpoint re-runs the agent pipeline but excludes already-found candidates,
+    uses pagination to get different results, and randomizes search strategies.
+    """
+    db_job = db.query(DBJob).filter(DBJob.id == job_id).first()
+
+    if not db_job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if db_job.status == JobStatus.RUNNING.value:
+        raise HTTPException(status_code=400, detail="Job is already running")
+
+    # Update job status
+    db_job.status = JobStatus.RUNNING.value
+    db.commit()
+
+    logger.info(f"Finding more candidates for job {job_id}")
+
+    # Prepare job data for agents
+    job_data = {
+        "title": db_job.title,
+        "description": db_job.description,
+        "requirements": db_job.requirements or [],
+        "location": db_job.location,
+        "company_name": db_job.company_name,
+        "company_highlights": db_job.company_highlights or [],
+        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER
+    }
+
+    # Start agent orchestrator in background
+    asyncio.create_task(run_pipeline_background(job_id, job_data))
+
+    return JobStartResponse(
+        message="Finding more candidates",
+        job_id=job_id,
+        status=JobStatus.RUNNING.value
+    )
+
+
 # Candidate endpoints
 
 @app.get("/api/candidates", response_model=List[Candidate])
