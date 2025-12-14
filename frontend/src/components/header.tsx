@@ -22,15 +22,17 @@ export default function Header() {
   }
 
   return (
-    <header className="relative z-10 flex items-center justify-between px-8 lg:px-12 py-6 transition-colors duration-500 bg-transparent dark:bg-[#3c3c3c]">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-8 lg:px-12 py-6 transition-colors duration-500 bg-white/80 dark:bg-[#3c3c3c]/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50">
       {/* Logo or Back Button */}
       {showBackButton ? (
         <BackButton href="/" />
       ) : (
         <div className="flex items-end gap-8">
-          <h1 className="font-pixelify text-3xl md:text-4xl tracking-tight transition-colors duration-500 text-black dark:text-white">
-            Gaither
-          </h1>
+          <Link href="/">
+            <h1 className="font-pixelify text-3xl md:text-4xl tracking-tight transition-colors duration-500 text-black dark:text-white hover:opacity-80 cursor-pointer">
+              Gaither
+            </h1>
+          </Link>
           <nav className="hidden md:block">
             <Link
               href="/about"
