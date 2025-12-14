@@ -10,12 +10,23 @@ import AgentStatus from '@/components/dashboard/agent-status'
 import CandidateCard from '@/components/dashboard/candidate-card'
 import MetricsPanel from '@/components/dashboard/metrics-panel'
 
-export default function Dashboard() {
-  const [jobId, setJobId] = useState<JobResponse['id'] | null>(null)
+interface DashboardProps {
+  initialJobId?: string | null
+}
+
+export default function Dashboard({ initialJobId = null }: DashboardProps) {
+  const [jobId, setJobId] = useState<JobResponse['id'] | null>(initialJobId)
   const [isLoading, setIsLoading] = useState(false)
 
   const { agentStates, candidates, events, metrics, setCurrentJob, reset } = useAgentStore()
   const { isConnected } = useAgentWebSocket(jobId)
+
+  // Sync jobId with initialJobId prop
+  useEffect(() => {
+    if (initialJobId) {
+      setJobId(initialJobId)
+    }
+  }, [initialJobId])
 
   // Timer for elapsed time
   useEffect(() => {
@@ -139,11 +150,10 @@ export default function Dashboard() {
               Gaither <span className="text-accent-blue text-sm font-mono ml-2">v2.0</span>
             </h1>
             <div
-              className={`px-3 py-1 rounded-full text-xs font-mono border ${
-                isConnected
-                  ? 'bg-green-500/10 border-green-500/20 text-green-500'
-                  : 'bg-red-500/10 border-red-500/20 text-red-500'
-              }`}
+              className={`px-3 py-1 rounded-full text-xs font-mono border ${isConnected
+                ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                : 'bg-red-500/10 border-red-500/20 text-red-500'
+                }`}
             >
               {isConnected ? 'SYSTEM ONLINE' : 'DISCONNECTED'}
             </div>

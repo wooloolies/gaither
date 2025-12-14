@@ -7,6 +7,15 @@
  */
 import type { JobLocation } from './job-location';
 import type { JobModelProvider } from './job-model-provider';
+import type { JobRecruiterName } from './job-recruiter-name';
+import type { JobLanguageRequirement } from './job-language-requirement';
+import type { JobKeyResponsibilities } from './job-key-responsibilities';
+import type { JobCoreSkillRequirement } from './job-core-skill-requirement';
+import type { JobFamiliarWith } from './job-familiar-with';
+import type { JobWorkType } from './job-work-type';
+import type { JobYearsOfExperience } from './job-years-of-experience';
+import type { JobMinimumRequiredDegree } from './job-minimum-required-degree';
+import type { JobGrade } from './job-grade';
 import type { JobStatus } from './job-status';
 
 /**
@@ -20,12 +29,21 @@ export interface Job {
   title: string;
   /** @minLength 10 */
   description: string;
-  requirements?: string[];
-  location?: JobLocation;
   /** @minLength 1 */
   company_name: string;
+  requirements?: string[];
+  location?: JobLocation;
   company_highlights?: string[];
   model_provider?: JobModelProvider;
+  recruiter_name?: JobRecruiterName;
+  language_requirement?: JobLanguageRequirement;
+  key_responsibilities?: JobKeyResponsibilities;
+  core_skill_requirement?: JobCoreSkillRequirement;
+  familiar_with?: JobFamiliarWith;
+  work_type?: JobWorkType;
+  years_of_experience?: JobYearsOfExperience;
+  minimum_required_degree?: JobMinimumRequiredDegree;
+  grade?: JobGrade;
   id: string;
   created_at: string;
   status: JobStatus;

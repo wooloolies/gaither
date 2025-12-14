@@ -859,6 +859,11 @@
             "minLength": 10,
             "title": "Description"
           },
+          "company_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Company Name"
+          },
           "requirements": {
             "items": {
               "type": "string"
@@ -876,11 +881,6 @@
               }
             ],
             "title": "Location"
-          },
-          "company_name": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Company Name"
           },
           "company_highlights": {
             "items": {
@@ -900,6 +900,105 @@
               }
             ],
             "title": "Model Provider"
+          },
+          "recruiter_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recruiter Name"
+          },
+          "language_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Requirement"
+          },
+          "key_responsibilities": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Responsibilities"
+          },
+          "core_skill_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Core Skill Requirement"
+          },
+          "familiar_with": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Familiar With"
+          },
+          "work_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Type"
+          },
+          "years_of_experience": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Of Experience"
+          },
+          "minimum_required_degree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Required Degree"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
           },
           "id": {
             "type": "string",
@@ -939,6 +1038,11 @@
             "minLength": 10,
             "title": "Description"
           },
+          "company_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Company Name"
+          },
           "requirements": {
             "items": {
               "type": "string"
@@ -956,11 +1060,6 @@
               }
             ],
             "title": "Location"
-          },
-          "company_name": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Company Name"
           },
           "company_highlights": {
             "items": {
@@ -980,6 +1079,105 @@
               }
             ],
             "title": "Model Provider"
+          },
+          "recruiter_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recruiter Name"
+          },
+          "language_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Requirement"
+          },
+          "key_responsibilities": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Responsibilities"
+          },
+          "core_skill_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Core Skill Requirement"
+          },
+          "familiar_with": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Familiar With"
+          },
+          "work_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Type"
+          },
+          "years_of_experience": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Of Experience"
+          },
+          "minimum_required_degree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Required Degree"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
           }
         },
         "type": "object",

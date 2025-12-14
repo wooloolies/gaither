@@ -97,14 +97,15 @@ class HunterAgent(BaseAgent):
             Dictionary with programming_languages, frameworks, domains, related_technologies, and search_terms
         """
         location = job_data.get('location', '')
+        key_responsibilities = job_data.get('key_responsibilities') or job_data.get('description', '')
 
         prompt = f"""
 Analyze this job description and extract comprehensive search keywords to find the BEST matching candidates on GitHub.
 
 Title: {job_data.get('title', '')}
-Company: {job_data.get('company', '')}
+Company: {job_data.get('company_name', '')}
 Location: {location}
-Description: {job_data.get('description', '')}
+Description: {key_responsibilities}
 Requirements: {', '.join(job_data.get('requirements', []))}
 
 Extract and categorize:

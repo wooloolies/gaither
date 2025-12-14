@@ -1,6 +1,5 @@
 import { useFieldContext } from '@/hooks/use-form'
-import { getErrorMessage } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { getErrorMessage, cn } from '@/lib/utils'
 
 interface NumberFieldProps {
   label: string
@@ -34,8 +33,11 @@ export function NumberField({
         type="number"
         id={field.name}
         {...(isInvalid ? { 'aria-invalid': true } : {})}
-        value={field.state.value}
-        onChange={(e) => field.handleChange(Number(e.target.value))}
+        value={field.state.value ?? ''}
+        onChange={(e) => {
+          const value = e.target.value
+          field.handleChange(value === '' ? undefined : Number(value))
+        }}
         onBlur={field.handleBlur}
         min={min !== undefined ? String(min) : undefined}
         max={max !== undefined ? String(max) : undefined}
