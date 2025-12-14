@@ -95,7 +95,7 @@ def calculate_job_content_hash(title: str, company_name: str, description: str, 
 
 
 # Health check endpoint
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
@@ -103,7 +103,7 @@ async def health_check():
 
 # Job endpoints
 
-@app.post("/api/jobs", response_model=Job)
+@app.post("/api/jobs", response_model=Job, tags=["Jobs"])
 async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
     """
     Create a new recruiting job.
@@ -182,7 +182,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/jobs/{job_id}", response_model=Job)
+@app.get("/api/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: str, db: Session = Depends(get_db)):
     """Get job details by ID"""
     db_job = db.query(DBJob).filter(DBJob.id == job_id).first()
@@ -204,7 +204,7 @@ async def get_job(job_id: str, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/jobs", response_model=List[Job])
+@app.get("/api/jobs", response_model=List[Job], tags=["Jobs"])
 async def list_jobs(db: Session = Depends(get_db)):
     """List all jobs"""
     db_jobs = db.query(DBJob).order_by(DBJob.created_at.desc()).all()
@@ -226,7 +226,7 @@ async def list_jobs(db: Session = Depends(get_db)):
     ]
 
 
-@app.post("/api/jobs/{job_id}/start", response_model=JobStartResponse)
+@app.post("/api/jobs/{job_id}/start", response_model=JobStartResponse, tags=["Jobs"])
 async def start_job(job_id: str, db: Session = Depends(get_db)):
     """Start the agent pipeline for a job"""
     db_job = db.query(DBJob).filter(DBJob.id == job_id).first()
@@ -278,7 +278,7 @@ async def run_pipeline_background(job_id: str, job_data: dict):
         db.close()
 
 
-@app.post("/api/jobs/{job_id}/find-more", response_model=JobStartResponse)
+@app.post("/api/jobs/{job_id}/find-more", response_model=JobStartResponse, tags=["Jobs"])
 async def find_more_candidates(job_id: str, db: Session = Depends(get_db)):
     """
     Find more candidates for an existing job.
@@ -323,7 +323,7 @@ async def find_more_candidates(job_id: str, db: Session = Depends(get_db)):
 
 # Candidate endpoints
 
-@app.get("/api/candidates", response_model=List[Candidate])
+@app.get("/api/candidates", response_model=List[Candidate], tags=["Candidates"])
 async def list_candidates(job_id: str = None, db: Session = Depends(get_db)):
     """List candidates, optionally filtered by job_id"""
     query = db.query(DBCandidate)
@@ -355,7 +355,7 @@ async def list_candidates(job_id: str = None, db: Session = Depends(get_db)):
     ]
 
 
-@app.get("/api/candidates/{candidate_id}", response_model=Candidate)
+@app.get("/api/candidates/{candidate_id}", response_model=Candidate, tags=["Candidates"])
 async def get_candidate(candidate_id: str, db: Session = Depends(get_db)):
     """Get candidate details"""
     db_candidate = db.query(DBCandidate).filter(DBCandidate.id == candidate_id).first()
@@ -382,7 +382,7 @@ async def get_candidate(candidate_id: str, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/candidates/{candidate_id}/message", response_model=OutreachMessage)
+@app.get("/api/candidates/{candidate_id}/message", response_model=OutreachMessage, tags=["Candidates"])
 async def get_candidate_message(candidate_id: str, db: Session = Depends(get_db)):
     """Get outreach message for a candidate"""
     db_message = db.query(DBMessage).filter(DBMessage.candidate_id == candidate_id).first()
@@ -401,7 +401,7 @@ async def get_candidate_message(candidate_id: str, db: Session = Depends(get_db)
 
 # Semantic search endpoints (Weaviate)
 
-@app.get("/api/search/candidates")
+@app.get("/api/search/candidates", tags=["Search"])
 async def search_candidates_by_strengths(
     query: str,
     limit: int = 10
@@ -472,7 +472,7 @@ async def search_candidates_by_strengths(
         )
 
 
-@app.get("/api/vector/candidates")
+@app.get("/api/vector/candidates", tags=["Vector"])
 async def get_vector_candidates(
     job_id: str,
     min_fit_score: int = None

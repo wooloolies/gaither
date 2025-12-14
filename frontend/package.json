@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev --port 5173",
+    "gen:api": "pnpm exec -- orval --config ./orval.config.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -41,6 +42,7 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.13.0",
+    "orval": "8.0.0-rc.3",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.1.8",
     "typescript": "^5.7.2"

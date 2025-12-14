@@ -41,7 +41,7 @@ export const recruiterFormSchema = z.object({
       },
     })
     .min(50, 'Grade must be 50 or greater')
-    .max(100, 'Grade must be 100 or less'),
+    .max(90, 'Grade must be 90 or less'),
 })
 
 export type RecruiterFormData = z.infer<typeof recruiterFormSchema>

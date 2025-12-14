@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import type { JobRequest } from '@/lib/api'
+import type { JobRequest } from '@/lib/api-client'
 import { useAgentStore } from '@/store/agent-store'
 
 interface JobFormProps {
@@ -54,7 +54,7 @@ Stakeholder engagement and collaboration skills`,
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
+    setFormData((prev: JobRequest) => ({
       ...prev,
       [name]: value,
     }))

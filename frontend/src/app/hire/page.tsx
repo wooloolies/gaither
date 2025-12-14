@@ -7,7 +7,7 @@ import { revalidateLogic } from '@tanstack/react-form'
 import { useAppForm } from '@/hooks/use-form'
 import { recruiterFormSchema, type RecruiterFormData } from '@/schemas/recruiter-form-schema'
 import { Button } from '@/components/ui/button'
-import { jobsApi } from '@/lib/api'
+import { jobsApi } from '@/lib/api-client'
 import { useAgentStore } from '@/store/agent-store'
 import { useEffect, useState } from 'react'
 
@@ -202,8 +202,8 @@ export default function HirePage() {
                       label="Grade"
                       required
                       min={50}
-                      max={100}
-                      placeholder="50-100"
+                      max={90}
+                      placeholder="50-90"
                     />
                   )}
                 </form.AppField>
