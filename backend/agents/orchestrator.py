@@ -12,6 +12,7 @@ from agents.engager import EngagerAgent
 from database import DBJob, DBCandidate, DBMessage
 from services.websocket_manager import ws_manager
 from services.weaviate import get_weaviate_service
+from services.neo4j.service import get_neo4j_service
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +132,14 @@ class RecruitingOrchestrator:
                 weaviate_service = await asyncio.to_thread(get_weaviate_service)
             except Exception as weaviate_init_error:
                 # Log error but continue with SQLite-only saves
-                logger.warning(f"Weaviate service unavailable, continuing with SQLite-only saves: {weaviate_init_error}")
+                logger.warning(f"Weaviate service unavailable: {weaviate_init_error}")
+
+            # Get Neo4j service for graph storage (optional)
+            neo4j_service = None
+            try:
+                neo4j_service = await asyncio.to_thread(get_neo4j_service)
+            except Exception as neo4j_init_error:
+                logger.warning(f"Neo4j service unavailable: {neo4j_init_error}")
 
             for candidate in candidates:
                 analysis = candidate.get("analysis", {})
@@ -199,6 +207,28 @@ class RecruitingOrchestrator:
                         # Log error but don't fail the entire save operation
                         logger.error(f"Failed to store candidate in Weaviate: {weaviate_error}")
 
+                # Store in Neo4j for graph relationships (if service is available)
+                if neo4j_service is not None:
+                    try:
+                        await asyncio.to_thread(
+                            neo4j_service.store_candidate,
+                            candidate_id=str(db_candidate.id), # pass db ID as string if needed, or keep using username as ID logic
+                            job_id=job_id,
+                            username=candidate["username"],
+                            profile_url=candidate["profile_url"],
+                            strengths=analysis.get("strengths", []),
+                            concerns=analysis.get("concerns", []),
+                            skills=analysis.get("skills", []),
+                            fit_score=analysis.get("fit_score", 0),
+                            location=candidate.get("location"),
+                            bio=candidate.get("bio"),
+                            top_repo=analysis.get("top_repositories", []),
+                            education=[] # Add education if available in candidate data
+                        )
+                        logger.info(f"Stored candidate {candidate['username']} in Neo4j")
+                    except Exception as neo4j_error:
+                        logger.error(f"Failed to store candidate in Neo4j: {neo4j_error}")
+
                 # Create or update message record
                 if message:
                     # Check if message already exists for this candidate
@@ -221,7 +251,8 @@ class RecruitingOrchestrator:
 
             db.commit()
             weaviate_status = "and Weaviate" if weaviate_service is not None else "(Weaviate unavailable)"
-            logger.info(f"Saved {len(candidates)} candidates to SQLite {weaviate_status}")
+            neo4j_status = ", Neo4j" if neo4j_service is not None else "(Neo4j unavailable)"
+            logger.info(f"Saved {len(candidates)} candidates to SQLite {weaviate_status} {neo4j_status}")
 
         except Exception as e:
             logger.error(f"Error saving results to database: {e}")
