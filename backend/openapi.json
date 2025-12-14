@@ -47,7 +47,7 @@
       },
       "post": {
         "summary": "Create Job",
-        "description": "Create a new recruiting job",
+        "description": "Create a new recruiting job.\n\nUses content-based duplicate detection: if a job with identical content already exists,\nreturns the existing job instead of creating a duplicate. This prevents multiple job_ids\nfor the same logical job regardless of when it was created.",
         "operationId": "create_job_api_jobs_post",
         "requestBody": {
           "content": {
