@@ -183,11 +183,13 @@ class AnalyzerAgent(BaseAgent):
             for repo in repos[:5]
         ])
 
+        key_responsibilities = job_data.get('key_responsibilities') or job_data.get('description', '')
+        
         prompt = f"""
 Analyze this GitHub profile for the following role:
 
 JOB TITLE: {job_data.get('title', '')}
-JOB DESCRIPTION: {job_data.get('description', '')}
+JOB DESCRIPTION: {key_responsibilities}
 
 CANDIDATE PROFILE:
 Username: {candidate['username']}

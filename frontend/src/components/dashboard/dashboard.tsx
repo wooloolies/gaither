@@ -4,18 +4,29 @@ import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useAgentStore } from '@/store/agent-store'
 import { useAgentWebSocket } from '@/hooks/use-websocket'
-import { jobsApi, type JobRequest, type JobResponse } from '@/lib/api'
+import { jobsApi, type JobRequest, type JobResponse } from '@/lib/api-client'
 import JobForm from '@/components/dashboard/job-form'
 import AgentStatus from '@/components/dashboard/agent-status'
 import CandidateCard from '@/components/dashboard/candidate-card'
 import MetricsPanel from '@/components/dashboard/metrics-panel'
 
-export default function Dashboard() {
-  const [jobId, setJobId] = useState<JobResponse['id'] | null>(null)
+interface DashboardProps {
+  initialJobId?: string | null
+}
+
+export default function Dashboard({ initialJobId = null }: DashboardProps) {
+  const [jobId, setJobId] = useState<JobResponse['id'] | null>(initialJobId)
   const [isLoading, setIsLoading] = useState(false)
 
   const { agentStates, candidates, events, metrics, setCurrentJob, reset } = useAgentStore()
   const { isConnected } = useAgentWebSocket(jobId)
+
+  // Sync jobId with initialJobId prop
+  useEffect(() => {
+    if (initialJobId) {
+      setJobId(initialJobId)
+    }
+  }, [initialJobId])
 
   // Timer for elapsed time
   useEffect(() => {
@@ -53,6 +64,20 @@ export default function Dashboard() {
     if (confirm('Are you sure you want to start a new search?')) {
       setJobId(null)
       reset()
+    }
+  }
+
+  const handleFindMore = async () => {
+    if (!jobId) return
+    setIsLoading(true)
+    try {
+      await jobsApi.findMore(jobId)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error finding more candidates:', error)
+      alert('Error finding more candidates. Please check console for details.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -125,11 +150,10 @@ export default function Dashboard() {
               Gaither <span className="text-accent-blue text-sm font-mono ml-2">v2.0</span>
             </h1>
             <div
-              className={`px-3 py-1 rounded-full text-xs font-mono border ${
-                isConnected
-                  ? 'bg-green-500/10 border-green-500/20 text-green-500'
-                  : 'bg-red-500/10 border-red-500/20 text-red-500'
-              }`}
+              className={`px-3 py-1 rounded-full text-xs font-mono border ${isConnected
+                ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                : 'bg-red-500/10 border-red-500/20 text-red-500'
+                }`}
             >
               {isConnected ? 'SYSTEM ONLINE' : 'DISCONNECTED'}
             </div>
@@ -167,6 +191,17 @@ export default function Dashboard() {
                 candidates.map((candidate, i) => <CandidateCard key={candidate.id} candidate={candidate} index={i} />)
               )}
             </div>
+            {candidates.length > 0 && (
+              <div className="p-4 border-t border-border bg-surface/30">
+                <button
+                  onClick={handleFindMore}
+                  disabled={isLoading || agentStates.hunter === 'active'}
+                  className="w-full px-4 py-3 text-sm font-medium text-white bg-accent-blue hover:bg-accent-blue/80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading || agentStates.hunter === 'active' ? 'Searching...' : '🔍 Find More Candidates'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right: Metrics (Data Viz) */}

@@ -6,6 +6,7 @@ from google import genai
 from google.genai import types
 import asyncio
 import logging
+import time
 from typing import Dict, Any
 from config import settings
 from .base import (
@@ -19,9 +20,22 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
+# Rate limiting intervals for Gemini Free Tier (only enabled when GEMINI_FREE_TIER=true)
+# gemini-2.5-flash: 5 RPM = 12s interval
+# gemini-2.5-flash-lite: 15 RPM = 4s interval
+RATE_LIMIT_INTERVALS = {
+    "gemini-2.5-flash": 13.0,
+    "gemini-2.5-flash-lite": 5.0,  # 4s + 1s buffer
+}
+DEFAULT_RATE_LIMIT_INTERVAL = 13.0  # Conservative default
+
 
 class GeminiService(AbstractLLMService):
     """Service for interacting with Google Gemini API using new google-genai SDK"""
+
+    # Class-level rate limiting (shared across all instances)
+    _last_request_time: float = 0.0
+    _rate_limit_lock: asyncio.Lock | None = None
 
     def __init__(self):
         # Validate API key configuration
@@ -37,6 +51,36 @@ class GeminiService(AbstractLLMService):
             logger.info(f"Gemini service initialized with model: {self.model_name}")
         except Exception as e:
             raise LLMConfigurationError(f"Failed to initialize Gemini client: {e}") from e
+
+    async def _wait_for_rate_limit(self):
+        """
+        Wait if necessary to respect Gemini's rate limit.
+        Rate limits vary by model:
+        - gemini-2.5-flash: 5 RPM (12s interval)
+        - gemini-2.5-flash-lite: 15 RPM (4s interval)
+        Only active when GEMINI_FREE_TIER=true.
+        """
+        # Skip rate limiting for paid tier
+        if not settings.GEMINI_FREE_TIER:
+            return
+
+        # Lazily create lock (must be created in async context)
+        if GeminiService._rate_limit_lock is None:
+            GeminiService._rate_limit_lock = asyncio.Lock()
+
+        # Get model-specific rate limit interval
+        min_interval = RATE_LIMIT_INTERVALS.get(self.model_name, DEFAULT_RATE_LIMIT_INTERVAL)
+
+        async with GeminiService._rate_limit_lock:
+            now = time.time()
+            elapsed = now - GeminiService._last_request_time
+            wait_time = min_interval - elapsed
+
+            if wait_time > 0:
+                logger.info(f"⏳ Rate limiting ({self.model_name}): waiting {wait_time:.1f}s...")
+                await asyncio.sleep(wait_time)
+
+            GeminiService._last_request_time = time.time()
 
     async def function_call(
         self,
@@ -77,6 +121,9 @@ class GeminiService(AbstractLLMService):
         timeout: int
     ) -> Dict[str, Any]:
         """Implementation of function call with timeout"""
+        # Wait for rate limit before making request
+        await self._wait_for_rate_limit()
+
         try:
             # Build function declaration using new SDK format
             function_declaration = {
@@ -87,10 +134,20 @@ class GeminiService(AbstractLLMService):
 
             # Create tools and config using new SDK types
             tools = types.Tool(function_declarations=[function_declaration])
+
+            # Force the model to use the function (required for reliable function calling)
+            tool_config = types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(
+                    mode="ANY",  # Force function calling
+                    allowed_function_names=[function_name]
+                )
+            )
+
             config = types.GenerateContentConfig(
                 temperature=0.1,  # Low temperature for structured output
                 max_output_tokens=max_tokens,
-                tools=[tools]
+                tools=[tools],
+                tool_config=tool_config
             )
 
             # Call Gemini API with timeout
@@ -164,6 +221,9 @@ class GeminiService(AbstractLLMService):
         timeout: int
     ) -> str:
         """Implementation of analyze with timeout"""
+        # Wait for rate limit before making request
+        await self._wait_for_rate_limit()
+
         try:
             # Create config using new SDK types
             config = types.GenerateContentConfig(

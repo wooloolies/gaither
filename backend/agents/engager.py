@@ -117,7 +117,7 @@ CANDIDATE:
 OUR COMPANY & ROLE:
 - Company: {job_data.get('company_name', 'Our Company')}
 - Role: {job_data.get('title', '')}
-- Description: {job_data.get('description', '')[:200]}
+- Description: {(job_data.get('key_responsibilities') or job_data.get('description', ''))[:200]}
 
 REQUIREMENTS:
 1. Professional but warm and genuine tone

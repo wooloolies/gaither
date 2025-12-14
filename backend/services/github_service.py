@@ -131,17 +131,53 @@ class GitHubService:
             logger.error(f"Error fetching commits for {username}/{repo_name}: {e}")
             return []
 
+    async def get_repo_readme(self, username: str, repo_name: str) -> str:
+        """
+        Get the raw content of the repository's README file.
+
+        Args:
+            username: GitHub username
+            repo_name: Repository name
+
+        Returns:
+            String content of README or empty string if not found
+        """
+        try:
+            # Try fetching common README filenames
+            filenames = ["README.md", "README.rst", "README.txt", "README"]
+            
+            for filename in filenames:
+                url = f"https://raw.githubusercontent.com/{username}/{repo_name}/master/{filename}"
+                # If master fails, try main
+                response = await self.client.get(url)
+                
+                if response.status_code == 404:
+                    url = f"https://raw.githubusercontent.com/{username}/{repo_name}/main/{filename}"
+                    response = await self.client.get(url)
+
+                if response.status_code == 200:
+                    logger.info(f"Fetched README for {username}/{repo_name}")
+                    return response.text
+            
+            return ""
+
+        except Exception as e:
+            logger.error(f"Error fetching README for {username}/{repo_name}: {e}")
+            return ""
+
     async def search_users(
         self,
         query: str,
-        per_page: int = 20
+        per_page: int = 20,
+        page: int = 1
     ) -> List[Dict[str, Any]]:
         """
         Search for GitHub users.
 
         Args:
             query: Search query (e.g., "language:python location:sf")
-            per_page: Number of results
+            per_page: Number of results per page
+            page: Page number (1-indexed)
 
         Returns:
             List of user data
@@ -149,7 +185,7 @@ class GitHubService:
         try:
             response = await self.client.get(
                 f"{self.base_url}/search/users",
-                params={"q": query, "per_page": per_page}
+                params={"q": query, "per_page": per_page, "page": page}
             )
 
             if response.status_code == 200:

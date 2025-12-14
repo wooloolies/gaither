@@ -43,6 +43,9 @@ class DBJob(Base):
     status = Column(String, default="pending")
     content_hash = Column(String, nullable=True)  # Hash of job content for duplicate detection
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Additional recruiter form fields (stored as JSON)
+    recruiter_form_data = Column(JSON, nullable=True)  # Stores: recruiter_name, language_requirement, key_responsibilities, core_skill_requirement, familiar_with, work_type, years_of_experience, minimum_required_degree, grade
 
     # Relationships
     candidates = relationship("DBCandidate", back_populates="job", cascade="all, delete-orphan")

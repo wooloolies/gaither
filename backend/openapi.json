@@ -6,8 +6,237 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/analysis/repo": {
+      "post": {
+        "tags": [
+          "Analysis"
+        ],
+        "summary": "Analyze Repo",
+        "description": "Analyze a GitHub repository using LLM.",
+        "operationId": "analyze_repo_api_analysis_repo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepoAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/candidates": {
+      "get": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Get All Candidates Graph",
+        "description": "Get a snapshot of the candidate graph.\nReturns nodes and links formatted for react-force-graph-2d.",
+        "operationId": "get_all_candidates_graph_api_neo4j_candidates_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForceGraphData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/candidates/{username_or_id}": {
+      "get": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Get Candidate Graph",
+        "description": "Get the graph for a specific candidate by username or ID.\nReturns nodes and links formatted for react-force-graph-2d.",
+        "operationId": "get_candidate_graph_api_neo4j_candidates__username_or_id__get",
+        "parameters": [
+          {
+            "name": "username_or_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Username Or Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForceGraphData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/candidates/{candidate_id}": {
+      "delete": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Delete Candidate",
+        "description": "Delete a candidate node and its relationships.",
+        "operationId": "delete_candidate_api_neo4j_candidates__candidate_id__delete",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/neo4j/graph/filter": {
+      "get": {
+        "tags": [
+          "neo4j"
+        ],
+        "summary": "Get Graph By Filter",
+        "description": "Get graph centered around a specific entity (Skill, Location, etc.).\nReturns nodes and links formatted for react-force-graph-2d.",
+        "operationId": "get_graph_by_filter_api_neo4j_graph_filter_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Filter type: skill, location, education, repo",
+              "title": "Type"
+            },
+            "description": "Filter type: skill, location, education, repo"
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Value to filter by (e.g., 'Python', 'Thailand')",
+              "title": "Value"
+            },
+            "description": "Value to filter by (e.g., 'Python', 'Thailand')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForceGraphData"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
+        "tags": [
+          "Health"
+        ],
         "summary": "Health Check",
         "description": "Health check endpoint",
         "operationId": "health_check_health_get",
@@ -25,6 +254,9 @@
     },
     "/api/jobs": {
       "get": {
+        "tags": [
+          "Jobs"
+        ],
         "summary": "List Jobs",
         "description": "List all jobs",
         "operationId": "list_jobs_api_jobs_get",
@@ -46,6 +278,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Jobs"
+        ],
         "summary": "Create Job",
         "description": "Create a new recruiting job.\n\nUses content-based duplicate detection: if a job with identical content already exists,\nreturns the existing job instead of creating a duplicate. This prevents multiple job_ids\nfor the same logical job regardless of when it was created.",
         "operationId": "create_job_api_jobs_post",
@@ -85,6 +320,9 @@
     },
     "/api/jobs/{job_id}": {
       "get": {
+        "tags": [
+          "Jobs"
+        ],
         "summary": "Get Job",
         "description": "Get job details by ID",
         "operationId": "get_job_api_jobs__job_id__get",
@@ -125,6 +363,9 @@
     },
     "/api/jobs/{job_id}/start": {
       "post": {
+        "tags": [
+          "Jobs"
+        ],
         "summary": "Start Job",
         "description": "Start the agent pipeline for a job",
         "operationId": "start_job_api_jobs__job_id__start_post",
@@ -163,8 +404,54 @@
         }
       }
     },
+    "/api/jobs/{job_id}/find-more": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Find More Candidates",
+        "description": "Find more candidates for an existing job.\n\nThis endpoint re-runs the agent pipeline but excludes already-found candidates,\nuses pagination to get different results, and randomizes search strategies.",
+        "operationId": "find_more_candidates_api_jobs__job_id__find_more_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/candidates": {
       "get": {
+        "tags": [
+          "Candidates"
+        ],
         "summary": "List Candidates",
         "description": "List candidates, optionally filtered by job_id",
         "operationId": "list_candidates_api_candidates_get",
@@ -209,6 +496,9 @@
     },
     "/api/candidates/{candidate_id}": {
       "get": {
+        "tags": [
+          "Candidates"
+        ],
         "summary": "Get Candidate",
         "description": "Get candidate details",
         "operationId": "get_candidate_api_candidates__candidate_id__get",
@@ -249,6 +539,9 @@
     },
     "/api/candidates/{candidate_id}/message": {
       "get": {
+        "tags": [
+          "Candidates"
+        ],
         "summary": "Get Candidate Message",
         "description": "Get outreach message for a candidate",
         "operationId": "get_candidate_message_api_candidates__candidate_id__message_get",
@@ -289,6 +582,9 @@
     },
     "/api/search/candidates": {
       "get": {
+        "tags": [
+          "Search"
+        ],
         "summary": "Search Candidates By Strengths",
         "description": "Search candidates using semantic similarity across ALL jobs.\n\nThis endpoint searches the entire candidate pool globally, not filtered by job.\nA candidate who applied for one position might be perfect for another based on\ntheir strengths and skills.\n\nArgs:\n    query: Natural language query describing desired candidate strengths (min 3 chars)\n    limit: Maximum number of results (default 10, max 100)\n\nReturns:\n    List of candidates ranked by similarity across all jobs",
         "operationId": "search_candidates_by_strengths_api_search_candidates_get",
@@ -337,6 +633,9 @@
     },
     "/api/vector/candidates": {
       "get": {
+        "tags": [
+          "Vector"
+        ],
         "summary": "Get Vector Candidates",
         "description": "Get all candidates for a job from Weaviate vector database.\n\nArgs:\n    job_id: Job ID to filter by (required)\n    min_fit_score: Minimum fit score threshold (optional)\n\nReturns:\n    List of candidates from vector database",
         "operationId": "get_vector_candidates_api_vector_candidates_get",
@@ -366,6 +665,48 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Chat With Candidates",
+        "description": "Conversational candidate search powered by Weaviate QueryAgent.\n\nExpects a list of chat messages (role/content). The last user message should\ncontain the current question; prior messages provide context.",
+        "operationId": "chat_with_candidates_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeaviateAskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeaviateAskResponse"
+                }
               }
             }
           },
@@ -507,6 +848,75 @@
         "title": "CandidateAnalysis",
         "description": "Candidate analysis results"
       },
+      "ForceGraphData": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/GraphLink"
+            },
+            "type": "array",
+            "title": "Links"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "links"
+        ],
+        "title": "ForceGraphData",
+        "description": "Complete graph data format for frontend."
+      },
+      "GraphLink": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "type"
+        ],
+        "title": "GraphLink",
+        "description": "Link structure for react-force-graph."
+      },
+      "GraphNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "GraphNode",
+        "description": "Node structure for react-force-graph."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -533,6 +943,11 @@
             "minLength": 10,
             "title": "Description"
           },
+          "company_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Company Name"
+          },
           "requirements": {
             "items": {
               "type": "string"
@@ -550,11 +965,6 @@
               }
             ],
             "title": "Location"
-          },
-          "company_name": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Company Name"
           },
           "company_highlights": {
             "items": {
@@ -574,6 +984,105 @@
               }
             ],
             "title": "Model Provider"
+          },
+          "recruiter_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recruiter Name"
+          },
+          "language_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Requirement"
+          },
+          "key_responsibilities": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Responsibilities"
+          },
+          "core_skill_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Core Skill Requirement"
+          },
+          "familiar_with": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Familiar With"
+          },
+          "work_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Type"
+          },
+          "years_of_experience": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Of Experience"
+          },
+          "minimum_required_degree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Required Degree"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
           },
           "id": {
             "type": "string",
@@ -613,6 +1122,11 @@
             "minLength": 10,
             "title": "Description"
           },
+          "company_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Company Name"
+          },
           "requirements": {
             "items": {
               "type": "string"
@@ -630,11 +1144,6 @@
               }
             ],
             "title": "Location"
-          },
-          "company_name": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Company Name"
           },
           "company_highlights": {
             "items": {
@@ -654,6 +1163,105 @@
               }
             ],
             "title": "Model Provider"
+          },
+          "recruiter_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recruiter Name"
+          },
+          "language_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language Requirement"
+          },
+          "key_responsibilities": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Responsibilities"
+          },
+          "core_skill_requirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Core Skill Requirement"
+          },
+          "familiar_with": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Familiar With"
+          },
+          "work_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Type"
+          },
+          "years_of_experience": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Of Experience"
+          },
+          "minimum_required_degree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Required Degree"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
           }
         },
         "type": "object",
@@ -735,6 +1343,32 @@
         "title": "OutreachMessage",
         "description": "Outreach message schema"
       },
+      "RepoAnalysisRequest": {
+        "properties": {
+          "repo_url": {
+            "type": "string",
+            "title": "Repo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "repo_url"
+        ],
+        "title": "RepoAnalysisRequest"
+      },
+      "RepoAnalysisResponse": {
+        "properties": {
+          "analysis": {
+            "type": "string",
+            "title": "Analysis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis"
+        ],
+        "title": "RepoAnalysisResponse"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -767,6 +1401,59 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeaviateAskRequest": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/WeaviateChatMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "title": "WeaviateAskRequest",
+        "description": "Request payload for Weaviate QueryAgent ask."
+      },
+      "WeaviateAskResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "title": "WeaviateAskResponse",
+        "description": "Response payload for Weaviate QueryAgent ask."
+      },
+      "WeaviateChatMessage": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "WeaviateChatMessage",
+        "description": "Chat message for Weaviate QueryAgent."
       }
     }
   }

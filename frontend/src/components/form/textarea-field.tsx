@@ -31,7 +31,7 @@ export function TextareaField({
       <textarea
         id={field.name}
         {...(isInvalid ? { 'aria-invalid': true } : {})}
-        value={field.state.value}
+        value={field.state.value ?? ''}
         onChange={(e) => field.handleChange(e.target.value)}
         onBlur={field.handleBlur}
         rows={rows}
