@@ -5,7 +5,7 @@ import DocumentSwirl from '@/components/document-swirl'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
+    <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
 
       {/* Floating Documents */}
       {/* <FloatingDocuments /> */}

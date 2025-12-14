@@ -12,7 +12,7 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
+    <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
       <IntroSection onScrollDown={scrollToAgentsSection} />
       <AgentsSection ref={agentsSectionRef} />
     </div>

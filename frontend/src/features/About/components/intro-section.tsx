@@ -9,7 +9,7 @@ interface IntroSectionProps {
 
 export default function IntroSection({ onScrollDown }: Readonly<IntroSectionProps>) {
   return (
-    <main className="relative z-10 flex flex-col items-center px-8 lg:px-12 pt-12 pb-20 min-h-[calc(100vh-100px)]">
+    <main className="relative z-10 flex flex-col items-center px-8 lg:px-12 pt-12 pb-20">
       {/* Title */}
       <h1 className="font-pixelify text-7xl md:text-8xl lg:text-[128px] mb-16 transition-colors duration-500 text-black dark:text-white">
         Gaither.

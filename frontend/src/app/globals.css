@@ -92,6 +92,9 @@
 
 @layer base {
   :root {
+    /* Layout */
+    --header-height: 6rem; /* 96px - 헤더 높이 */
+    
     /* Base Colors - Deep Professional Dark Mode */
     --bg-app: #09090b;       /* Zinc 950 */
     --bg-panel: #18181b;     /* Zinc 900 */
@@ -145,12 +148,16 @@
 
   html {
     @apply bg-background;
+    height: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased overflow-x-hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: hsl(var(--background));
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .dark {
@@ -184,5 +191,12 @@
 @layer base {
   * {
     @apply border-border;
+  }
+}
+
+@layer utilities {
+  /* 헤더 높이를 제외한 최소 높이 */
+  .min-h-content {
+    min-height: calc(100vh - var(--header-height));
   }
 }
