@@ -90,7 +90,7 @@ export const useAgentStore = create<AgentStoreState>((set) => ({
   events: [],
   metrics: initialMetrics,
   currentJob: null,
-  selectedModel: 'claude', // Default model
+  selectedModel: 'gemini', // Default model
 
   setSelectedModel: (model) => set({ selectedModel: model }),
 
@@ -157,7 +157,7 @@ export const useAgentStore = create<AgentStoreState>((set) => ({
       events: [],
       metrics: initialMetrics,
       currentJob: null,
-      selectedModel: 'claude',
+      selectedModel: 'gemini',
     }),
 
   handleWebSocketEvent: (event) =>
