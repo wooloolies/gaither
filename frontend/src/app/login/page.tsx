@@ -7,7 +7,7 @@ export default function LoginPage() {
   const handleGitHubSignIn = async () => {
     await signIn.social({
       provider: "github",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     })
   }
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
         </div>
         <Button
           onClick={handleGitHubSignIn}
-          className="w-full"
+          className="w-full cursor-pointer"
           size="lg"
         >
           <svg
