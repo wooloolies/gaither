@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useAgentStore } from '@/store/agent-store'
 import { useAgentWebSocket } from '@/hooks/use-websocket'
-import { jobsApi, type JobRequest, type JobResponse } from '@/lib/api'
+import { jobsApi, type JobRequest, type JobResponse } from '@/lib/api-client'
 import JobForm from '@/components/dashboard/job-form'
 import AgentStatus from '@/components/dashboard/agent-status'
 import CandidateCard from '@/components/dashboard/candidate-card'
@@ -53,6 +53,20 @@ export default function Dashboard() {
     if (confirm('Are you sure you want to start a new search?')) {
       setJobId(null)
       reset()
+    }
+  }
+
+  const handleFindMore = async () => {
+    if (!jobId) return
+    setIsLoading(true)
+    try {
+      await jobsApi.findMore(jobId)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error finding more candidates:', error)
+      alert('Error finding more candidates. Please check console for details.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -167,6 +181,17 @@ export default function Dashboard() {
                 candidates.map((candidate, i) => <CandidateCard key={candidate.id} candidate={candidate} index={i} />)
               )}
             </div>
+            {candidates.length > 0 && (
+              <div className="p-4 border-t border-border bg-surface/30">
+                <button
+                  onClick={handleFindMore}
+                  disabled={isLoading || agentStates.hunter === 'active'}
+                  className="w-full px-4 py-3 text-sm font-medium text-white bg-accent-blue hover:bg-accent-blue/80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading || agentStates.hunter === 'active' ? 'Searching...' : '🔍 Find More Candidates'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right: Metrics (Data Viz) */}
@@ -180,4 +205,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
 

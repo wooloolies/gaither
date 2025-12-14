@@ -32,6 +32,9 @@ class Settings:
 
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    
+    # Environment
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")  # development, production
 
     # Constraints
     MAX_CANDIDATES_PER_JOB: int = int(os.getenv("MAX_CANDIDATES_PER_JOB", "10"))

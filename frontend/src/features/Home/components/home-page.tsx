@@ -1,18 +1,22 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import DocumentSwirl from '@/components/document-swirl'
 
-export default function LandingPage() {
-  return (
-    <div className="min-h-screen relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
+export default function HomePage() {
+  const router = useRouter()
 
-      {/* Floating Documents */}
-      {/* <FloatingDocuments /> */}
+  const handleHireNow = () => {
+    router.push('/hire')
+  }
+
+  return (
+    <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-8 lg:px-12">
-        <div className="max-w-4xl mx-auto text-center md:text-left md:ml-[20%] lg:ml-[25%]">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-8 lg:px-12 pt-36 lg:justify-start">
+        <div className="max-w-4xl mx-auto text-center md:text-left">
           {/* Main headline */}
           <div className="font-pixelify mb-8 transition-colors duration-500 text-black dark:text-white">
             <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed">
@@ -36,7 +40,8 @@ export default function LandingPage() {
         {/* CTA Button */}
         <div className="mt-20 md:mt-28">
           <Button
-            className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black"
+            onClick={handleHireNow}
+            className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black cursor-pointer"
           >
             Hire Now
           </Button>

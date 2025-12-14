@@ -92,19 +92,22 @@
 
 @layer base {
   :root {
-    /* Base Colors - Deep Professional Dark Mode */
-    --bg-app: #09090b;       /* Zinc 950 */
-    --bg-panel: #18181b;     /* Zinc 900 */
-    --bg-surface: #27272a;   /* Zinc 800 */
+    /* Layout */
+    --header-height: 6rem; /* 96px */
     
-    /* Text Colors */
-    --text-primary: #f4f4f5; /* Zinc 100 */
-    --text-secondary: #a1a1aa; /* Zinc 400 */
-    --text-tertiary: #52525b; /* Zinc 600 */
+    /* Base Colors - Light Mode */
+    --bg-app: #ffffff;       /* White */
+    --bg-panel: #ffffff;     /* White */
+    --bg-surface: #f9fafb;   /* Gray 50 */
+    
+    /* Text Colors - Light Mode */
+    --text-primary: #09090b; /* Zinc 950 */
+    --text-secondary: #52525b; /* Zinc 600 */
+    --text-tertiary: #a1a1aa; /* Zinc 400 */
 
-    /* Borders */
-    --border-subtle: #27272a; /* Zinc 800 */
-    --border-highlight: #3f3f46; /* Zinc 700 */
+    /* Borders - Light Mode */
+    --border-subtle: #e4e4e7; /* Zinc 200 */
+    --border-highlight: #d4d4d8; /* Zinc 300 */
 
     /* Brand Accents - Creative but composed */
     --accent-blue: #3b82f6;
@@ -145,15 +148,33 @@
 
   html {
     @apply bg-background;
+    height: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased overflow-x-hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: hsl(var(--background));
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .dark {
+    /* Base Colors - Deep Professional Dark Mode */
+    --bg-app: #09090b;       /* Zinc 950 */
+    --bg-panel: #18181b;     /* Zinc 900 */
+    --bg-surface: #27272a;   /* Zinc 800 */
+    
+    /* Text Colors - Dark Mode */
+    --text-primary: #f4f4f5; /* Zinc 100 */
+    --text-secondary: #a1a1aa; /* Zinc 400 */
+    --text-tertiary: #52525b; /* Zinc 600 */
+
+    /* Borders - Dark Mode */
+    --border-subtle: #27272a; /* Zinc 800 */
+    --border-highlight: #3f3f46; /* Zinc 700 */
+    
     --background: 0 0% 23.5%;
     --foreground: 0 0% 98%;
     --card: 0 0% 23.5%;
@@ -184,5 +205,11 @@
 @layer base {
   * {
     @apply border-border;
+  }
+}
+
+@layer utilities {
+  .min-h-content {
+    min-height: calc(100vh - var(--header-height));
   }
 }

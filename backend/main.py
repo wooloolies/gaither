@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 import logging
 from datetime import datetime
 from typing import List
+import json
+from pathlib import Path
+import hashlib
 
 from config import settings
 from database import init_db, get_db, DBJob, DBCandidate, DBMessage
@@ -47,16 +50,57 @@ app.include_router(neo4j_router)
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database tables on startup"""
+    """Initialize database tables and generate OpenAPI spec on startup"""
     try:
         init_db()
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
+    
+    # Generate and save OpenAPI spec (only in non-production environments)
+    if settings.ENVIRONMENT != "production":
+        try:
+            openapi_spec = app.openapi()
+            backend_dir = Path(__file__).parent
+            openapi_path = backend_dir / "openapi.json"
+            
+            with open(openapi_path, "w", encoding="utf-8") as f:
+                json.dump(openapi_spec, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"OpenAPI spec saved to {openapi_path}")
+        except Exception as e:
+            logger.error(f"Error generating OpenAPI spec: {e}")
+    else:
+        logger.debug("Skipping OpenAPI spec generation in production")
+
+
+# Helper functions
+
+def calculate_job_content_hash(title: str, company_name: str, description: str, requirements: list) -> str:
+    """
+    Calculate a hash of job content for duplicate detection.
+
+    Uses SHA256 hash of normalized job content (title + company + description + requirements).
+    This allows detecting duplicate jobs regardless of when they were created.
+
+    Args:
+        title: Job title
+        company_name: Company name
+        description: Job description
+        requirements: List of requirements
+
+    Returns:
+        SHA256 hash string (hex)
+    """
+    # Normalize content (lowercase, strip whitespace)
+    content = f"{title.strip().lower()}|{company_name.strip().lower()}|{description.strip().lower()}|{'|'.join(sorted(r.strip().lower() for r in requirements))}"
+
+    # Calculate SHA256 hash
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
 
 # Health check endpoint
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
@@ -64,13 +108,49 @@ async def health_check():
 
 # Job endpoints
 
-@app.post("/api/jobs", response_model=Job)
+@app.post("/api/jobs", response_model=Job, tags=["Jobs"])
 async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
-    """Create a new recruiting job"""
+    """
+    Create a new recruiting job.
+
+    Uses content-based duplicate detection: if a job with identical content already exists,
+    returns the existing job instead of creating a duplicate. This prevents multiple job_ids
+    for the same logical job regardless of when it was created.
+    """
     try:
         # Use provided model_provider or default to settings
         model_provider = job_data.model_provider or settings.MODEL_PROVIDER
 
+        # Calculate content hash for duplicate detection
+        content_hash = calculate_job_content_hash(
+            title=job_data.title,
+            company_name=job_data.company_name,
+            description=job_data.description,
+            requirements=job_data.requirements or []
+        )
+
+        # Check for duplicate jobs using content hash
+        # This detects duplicates regardless of when they were created
+        existing_job = db.query(DBJob).filter(
+            DBJob.content_hash == content_hash
+        ).first()
+
+        if existing_job:
+            logger.info(f"Duplicate job detected (by content hash), returning existing job: {existing_job.id} - {existing_job.title}")
+            return Job(
+                id=existing_job.id,
+                title=existing_job.title,
+                description=existing_job.description,
+                requirements=existing_job.requirements or [],
+                location=existing_job.location,
+                company_name=existing_job.company_name,
+                company_highlights=existing_job.company_highlights or [],
+                model_provider=existing_job.model_provider,
+                created_at=existing_job.created_at,
+                status=JobStatus(existing_job.status)
+            )
+
+        # Create new job with content hash
         db_job = DBJob(
             title=job_data.title,
             description=job_data.description,
@@ -79,6 +159,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
             company_name=job_data.company_name,
             company_highlights=job_data.company_highlights,
             model_provider=model_provider,
+            content_hash=content_hash,
             status=JobStatus.PENDING.value
         )
 
@@ -86,7 +167,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_job)
 
-        logger.info(f"Created job: {db_job.id} - {db_job.title} (model: {model_provider})")
+        logger.info(f"Created new job: {db_job.id} - {db_job.title} (model: {model_provider}, hash: {content_hash[:8]}...)")
 
         return Job(
             id=db_job.id,
@@ -106,7 +187,7 @@ async def create_job(job_data: JobCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/jobs/{job_id}", response_model=Job)
+@app.get("/api/jobs/{job_id}", response_model=Job, tags=["Jobs"])
 async def get_job(job_id: str, db: Session = Depends(get_db)):
     """Get job details by ID"""
     db_job = db.query(DBJob).filter(DBJob.id == job_id).first()
@@ -128,7 +209,7 @@ async def get_job(job_id: str, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/jobs", response_model=List[Job])
+@app.get("/api/jobs", response_model=List[Job], tags=["Jobs"])
 async def list_jobs(db: Session = Depends(get_db)):
     """List all jobs"""
     db_jobs = db.query(DBJob).order_by(DBJob.created_at.desc()).all()
@@ -150,7 +231,7 @@ async def list_jobs(db: Session = Depends(get_db)):
     ]
 
 
-@app.post("/api/jobs/{job_id}/start", response_model=JobStartResponse)
+@app.post("/api/jobs/{job_id}/start", response_model=JobStartResponse, tags=["Jobs"])
 async def start_job(job_id: str, db: Session = Depends(get_db)):
     """Start the agent pipeline for a job"""
     db_job = db.query(DBJob).filter(DBJob.id == job_id).first()
@@ -202,9 +283,52 @@ async def run_pipeline_background(job_id: str, job_data: dict):
         db.close()
 
 
+@app.post("/api/jobs/{job_id}/find-more", response_model=JobStartResponse, tags=["Jobs"])
+async def find_more_candidates(job_id: str, db: Session = Depends(get_db)):
+    """
+    Find more candidates for an existing job.
+
+    This endpoint re-runs the agent pipeline but excludes already-found candidates,
+    uses pagination to get different results, and randomizes search strategies.
+    """
+    db_job = db.query(DBJob).filter(DBJob.id == job_id).first()
+
+    if not db_job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    if db_job.status == JobStatus.RUNNING.value:
+        raise HTTPException(status_code=400, detail="Job is already running")
+
+    # Update job status
+    db_job.status = JobStatus.RUNNING.value
+    db.commit()
+
+    logger.info(f"Finding more candidates for job {job_id}")
+
+    # Prepare job data for agents
+    job_data = {
+        "title": db_job.title,
+        "description": db_job.description,
+        "requirements": db_job.requirements or [],
+        "location": db_job.location,
+        "company_name": db_job.company_name,
+        "company_highlights": db_job.company_highlights or [],
+        "model_provider": db_job.model_provider or settings.MODEL_PROVIDER
+    }
+
+    # Start agent orchestrator in background
+    asyncio.create_task(run_pipeline_background(job_id, job_data))
+
+    return JobStartResponse(
+        message="Finding more candidates",
+        job_id=job_id,
+        status=JobStatus.RUNNING.value
+    )
+
+
 # Candidate endpoints
 
-@app.get("/api/candidates", response_model=List[Candidate])
+@app.get("/api/candidates", response_model=List[Candidate], tags=["Candidates"])
 async def list_candidates(job_id: str = None, db: Session = Depends(get_db)):
     """List candidates, optionally filtered by job_id"""
     query = db.query(DBCandidate)
@@ -236,7 +360,7 @@ async def list_candidates(job_id: str = None, db: Session = Depends(get_db)):
     ]
 
 
-@app.get("/api/candidates/{candidate_id}", response_model=Candidate)
+@app.get("/api/candidates/{candidate_id}", response_model=Candidate, tags=["Candidates"])
 async def get_candidate(candidate_id: str, db: Session = Depends(get_db)):
     """Get candidate details"""
     db_candidate = db.query(DBCandidate).filter(DBCandidate.id == candidate_id).first()
@@ -263,7 +387,7 @@ async def get_candidate(candidate_id: str, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/api/candidates/{candidate_id}/message", response_model=OutreachMessage)
+@app.get("/api/candidates/{candidate_id}/message", response_model=OutreachMessage, tags=["Candidates"])
 async def get_candidate_message(candidate_id: str, db: Session = Depends(get_db)):
     """Get outreach message for a candidate"""
     db_message = db.query(DBMessage).filter(DBMessage.candidate_id == candidate_id).first()
@@ -282,7 +406,7 @@ async def get_candidate_message(candidate_id: str, db: Session = Depends(get_db)
 
 # Semantic search endpoints (Weaviate)
 
-@app.get("/api/search/candidates")
+@app.get("/api/search/candidates", tags=["Search"])
 async def search_candidates_by_strengths(
     query: str,
     limit: int = 10
@@ -353,7 +477,7 @@ async def search_candidates_by_strengths(
         )
 
 
-@app.get("/api/vector/candidates")
+@app.get("/api/vector/candidates", tags=["Vector"])
 async def get_vector_candidates(
     job_id: str,
     min_fit_score: int = None

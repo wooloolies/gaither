@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Pixelify_Sans } from 'next/font/google'
 import localFont from 'next/font/local'
 import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
+import { Providers } from '@/components/providers'
 import Header from '@/components/header'
 
 const pixelifySans = Pixelify_Sans({
@@ -46,15 +46,14 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="en" className={`${pixelifySans.variable} ${stZhongsong.variable}`} suppressHydrationWarning>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          <Header />
-          {children}
-        </ThemeProvider>
+        <Providers>
+          <div className="flex flex-col min-h-full">
+            <Header />
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
+          </div>
+        </Providers>
       </body>
     </html>
   )

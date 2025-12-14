@@ -7,15 +7,27 @@ export interface JobRequest {
   company_name: string
   location?: string
   model_provider?: string
+  requirements?: string[]
+  company_highlights?: string[]
+  // Additional fields for recruiter form
+  recruiter_name?: string
+  language_requirement?: string
+  key_responsibilities?: string
+  core_skill_requirement?: string
+  familiar_with?: string
+  work_type?: string
+  years_of_experience?: number
+  minimum_required_degree?: string
+  grade?: number
 }
 
 export interface JobResponse extends JobRequest {
   id: string | number
 }
 
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -42,6 +54,11 @@ export const jobsApi = {
     const response = await apiClient.post<JobResponse>(`/api/jobs/${jobId}/start`)
     return response.data
   },
+
+  findMore: async (jobId: Job['id']): Promise<JobResponse> => {
+    const response = await apiClient.post<JobResponse>(`/api/jobs/${jobId}/find-more`)
+    return response.data
+  },
 }
 
 export const candidatesApi = {
@@ -63,4 +80,3 @@ export const candidatesApi = {
 }
 
 export default apiClient
-

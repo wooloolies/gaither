@@ -36,13 +36,22 @@ class RecruitingOrchestrator:
         try:
             logger.info(f"Starting recruiting pipeline for job {job_id}")
 
+            # Fetch existing candidates for this job to avoid duplicates
+            existing_candidates = db.query(DBCandidate).filter(
+                DBCandidate.job_id == job_id
+            ).all()
+            existing_usernames = {c.username for c in existing_candidates}
+
+            if existing_usernames:
+                logger.info(f"Found {len(existing_usernames)} existing candidates, will exclude them from search")
+
             # Create queues for agent communication
             hunter_to_analyzer_queue = asyncio.Queue()
             analyzer_to_engager_queue = asyncio.Queue()
 
             # Run all agents concurrently
             hunter_task = asyncio.create_task(
-                self.hunter.execute(job_id, job_data, hunter_to_analyzer_queue)
+                self.hunter.execute(job_id, job_data, hunter_to_analyzer_queue, existing_usernames)
             )
 
             analyzer_task = asyncio.create_task(
@@ -105,6 +114,10 @@ class RecruitingOrchestrator:
         """
         Save candidates and messages to database (SQLite + Weaviate).
 
+        Uses upsert logic to prevent duplicates:
+        - If candidate (username) already exists for this job, update their data
+        - If candidate is new, create a new record
+
         Args:
             job_id: The job ID
             candidates: List of candidates with analysis and messages
@@ -124,22 +137,44 @@ class RecruitingOrchestrator:
                 analysis = candidate.get("analysis", {})
                 message = candidate.get("message", {})
 
-                # Create candidate record in SQLite
-                db_candidate = DBCandidate(
-                    job_id=job_id,
-                    username=candidate["username"],
-                    profile_url=candidate["profile_url"],
-                    avatar_url=candidate.get("avatar_url"),
-                    bio=candidate.get("bio"),
-                    location=candidate.get("location"),
-                    fit_score=analysis.get("fit_score"),
-                    skills=analysis.get("skills", []),
-                    strengths=analysis.get("strengths", []),
-                    concerns=analysis.get("concerns", []),
-                    top_repositories=analysis.get("top_repositories", [])
-                )
+                # Check if candidate already exists for this job (by username)
+                existing_candidate = db.query(DBCandidate).filter(
+                    DBCandidate.job_id == job_id,
+                    DBCandidate.username == candidate["username"]
+                ).first()
 
-                db.add(db_candidate)
+                if existing_candidate:
+                    # Update existing candidate with new analysis
+                    logger.info(f"Updating existing candidate: {candidate['username']} for job {job_id}")
+                    existing_candidate.profile_url = candidate["profile_url"]
+                    existing_candidate.avatar_url = candidate.get("avatar_url")
+                    existing_candidate.bio = candidate.get("bio")
+                    existing_candidate.location = candidate.get("location")
+                    existing_candidate.fit_score = analysis.get("fit_score")
+                    existing_candidate.skills = analysis.get("skills", [])
+                    existing_candidate.strengths = analysis.get("strengths", [])
+                    existing_candidate.concerns = analysis.get("concerns", [])
+                    existing_candidate.top_repositories = analysis.get("top_repositories", [])
+
+                    db_candidate = existing_candidate
+                else:
+                    # Create new candidate record in SQLite
+                    logger.info(f"Creating new candidate: {candidate['username']} for job {job_id}")
+                    db_candidate = DBCandidate(
+                        job_id=job_id,
+                        username=candidate["username"],
+                        profile_url=candidate["profile_url"],
+                        avatar_url=candidate.get("avatar_url"),
+                        bio=candidate.get("bio"),
+                        location=candidate.get("location"),
+                        fit_score=analysis.get("fit_score"),
+                        skills=analysis.get("skills", []),
+                        strengths=analysis.get("strengths", []),
+                        concerns=analysis.get("concerns", []),
+                        top_repositories=analysis.get("top_repositories", [])
+                    )
+                    db.add(db_candidate)
+
                 db.flush()  # Get candidate ID
 
                 # Store in Weaviate for semantic search (if service is available)
@@ -164,14 +199,25 @@ class RecruitingOrchestrator:
                         # Log error but don't fail the entire save operation
                         logger.error(f"Failed to store candidate in Weaviate: {weaviate_error}")
 
-                # Create message record
+                # Create or update message record
                 if message:
-                    db_message = DBMessage(
-                        candidate_id=db_candidate.id,
-                        subject=message.get("subject", ""),
-                        body=message.get("body", "")
-                    )
-                    db.add(db_message)
+                    # Check if message already exists for this candidate
+                    existing_message = db.query(DBMessage).filter(
+                        DBMessage.candidate_id == db_candidate.id
+                    ).first()
+
+                    if existing_message:
+                        # Update existing message
+                        existing_message.subject = message.get("subject", "")
+                        existing_message.body = message.get("body", "")
+                    else:
+                        # Create new message
+                        db_message = DBMessage(
+                            candidate_id=db_candidate.id,
+                            subject=message.get("subject", ""),
+                            body=message.get("body", "")
+                        )
+                        db.add(db_message)
 
             db.commit()
             weaviate_status = "and Weaviate" if weaviate_service is not None else "(Weaviate unavailable)"

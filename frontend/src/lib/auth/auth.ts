@@ -8,6 +8,11 @@ export const auth = betterAuth({
       clientId: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     },
+
+    linkedin: {
+      clientId: process.env.LINKEDIN_CLIENT_ID as string,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET as string,
+    }
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
