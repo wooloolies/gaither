@@ -17,10 +17,10 @@ from config import settings
 from database import init_db, get_db, DBJob, DBCandidate, DBMessage
 from models import (
     JobCreate, Job, JobStatus, Candidate, CandidateAnalysis,
-    OutreachMessage, JobStartResponse
+    OutreachMessage, JobStartResponse, WeaviateAskRequest, WeaviateAskResponse
 )
 from services.websocket_manager import ws_manager
-from services.weaviate import get_weaviate_service
+from services.weaviate import get_weaviate_service, ask_candidates_agent, weaviate_query_agent_available
 from agents.orchestrator import orchestrator
 from api import neo4j_routes, analysis_routes
 import asyncio
@@ -562,6 +562,31 @@ async def get_vector_candidates(
     except Exception as e:
         logger.error(f"Error retrieving candidates from vector database: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/chat", response_model=WeaviateAskResponse, tags=['chat'])
+async def chat_with_candidates(payload: WeaviateAskRequest):
+    """
+    Conversational candidate search powered by Weaviate QueryAgent.
+
+    Expects a list of chat messages (role/content). The last user message should
+    contain the current question; prior messages provide context.
+    """
+    if not weaviate_query_agent_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Weaviate QueryAgent is not available. Upgrade weaviate-client to enable /api/chat.",
+        )
+
+    try:
+        # QueryAgent calls are blocking (network) → run in thread pool
+        answer = await asyncio.to_thread(ask_candidates_agent, payload.messages)
+        return WeaviateAskResponse(answer=answer)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in /api/chat: {e}")
+        raise HTTPException(status_code=500, detail="Chat service error")
 
 # WebSocket endpoint
 

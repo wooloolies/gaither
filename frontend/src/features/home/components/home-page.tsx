@@ -11,6 +11,10 @@ export default function HomePage() {
     router.push('/hire')
   }
 
+  const handleChat = () => {
+    router.push('/chat')
+  }
+
   return (
     <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
 
@@ -37,13 +41,19 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* CTA Button */}
-        <div className="mt-20 md:mt-28">
+        {/* CTA Buttons */}
+        <div className="mt-20 md:mt-28 flex flex-col sm:flex-row gap-4">
           <Button
             onClick={handleHireNow}
             className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black cursor-pointer"
           >
             Hire Now
+          </Button>
+          <Button
+            onClick={handleChat}
+            className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-white hover:bg-gray-50 text-black border border-black/20 dark:bg-black/30 dark:hover:bg-black/40 dark:text-white dark:border-white/20 cursor-pointer"
+          >
+            AI Talent Scout
           </Button>
         </div>
       </main>

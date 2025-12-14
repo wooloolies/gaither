@@ -25,6 +25,27 @@ export interface JobResponse extends JobRequest {
   id: string | number
 }
 
+export interface JobStartResponse {
+  message: string
+  job_id: string
+  status: string
+}
+
+export type ChatRole = 'user' | 'assistant' | 'system'
+
+export interface ChatMessage {
+  role: ChatRole
+  content: string
+}
+
+export interface ChatAskRequest {
+  messages: ChatMessage[]
+}
+
+export interface ChatAskResponse {
+  answer: string
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'
 
 export const apiClient = axios.create({

@@ -2,7 +2,7 @@
 Pydantic models for API request/response validation.
 """
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import datetime
 from enum import Enum
 
@@ -97,3 +97,19 @@ class JobStartResponse(BaseModel):
     message: str
     job_id: str
     status: str
+
+
+class WeaviateChatMessage(BaseModel):
+    """Chat message for Weaviate QueryAgent."""
+    role: Literal["user", "assistant", "system"]
+    content: str = Field(..., min_length=1)
+
+
+class WeaviateAskRequest(BaseModel):
+    """Request payload for Weaviate QueryAgent ask."""
+    messages: List[WeaviateChatMessage] = Field(default_factory=list)
+
+
+class WeaviateAskResponse(BaseModel):
+    """Response payload for Weaviate QueryAgent ask."""
+    answer: str

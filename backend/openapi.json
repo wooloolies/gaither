@@ -680,6 +680,48 @@
           }
         }
       }
+    },
+    "/api/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Chat With Candidates",
+        "description": "Conversational candidate search powered by Weaviate QueryAgent.\n\nExpects a list of chat messages (role/content). The last user message should\ncontain the current question; prior messages provide context.",
+        "operationId": "chat_with_candidates_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeaviateAskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeaviateAskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1359,6 +1401,59 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeaviateAskRequest": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/WeaviateChatMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "title": "WeaviateAskRequest",
+        "description": "Request payload for Weaviate QueryAgent ask."
+      },
+      "WeaviateAskResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "title": "WeaviateAskResponse",
+        "description": "Response payload for Weaviate QueryAgent ask."
+      },
+      "WeaviateChatMessage": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "WeaviateChatMessage",
+        "description": "Chat message for Weaviate QueryAgent."
       }
     }
   }
