@@ -6,7 +6,7 @@ capabilities. It manages nodes and relationships for candidate profiles.
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from dataclasses import asdict
 from neo4j import GraphDatabase
 from loguru import logger
@@ -153,7 +153,7 @@ class Neo4jService:
         fit_score: int,
         location: Optional[str] = None,
         bio: Optional[str] = None,
-        top_repo: List[str] = [],
+        top_repo: Union[List[str], List[Dict[str, Any]]] = [],
         education: List[str] = [],
     ) -> str:
         """
@@ -170,7 +170,7 @@ class Neo4jService:
             fit_score: Overall fit score (0-100)
             location: Candidate location
             bio: Candidate bio
-            top_repo: List of top repositories (1-2 repos)
+            top_repo: List of top repositories (strings or dicts with 'name' key)
             education: List of education entries
 
         Returns:
@@ -206,7 +206,18 @@ class Neo4jService:
             MERGE (u)-[:LOCATED_IN]->(l)""")
             
             # Handle Repos (top_repo)
-            top_repo = [item for item in params.get('top_repo', []) if item and item.strip()]
+            # top_repo can be a list of strings or dicts with 'name' key
+            raw_repos = params.get('top_repo', [])
+            top_repo = []
+            for item in raw_repos:
+                if isinstance(item, dict):
+                    # Extract name from dict
+                    repo_name = item.get('name', '')
+                    if repo_name and repo_name.strip():
+                        top_repo.append(repo_name.strip())
+                elif isinstance(item, str) and item.strip():
+                    top_repo.append(item.strip())
+            
             if top_repo:
                 query_parts.append("""
             FOREACH (repo_name IN $top_repo | 
