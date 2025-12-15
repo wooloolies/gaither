@@ -9,9 +9,10 @@ const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false 
 interface CandidateGraphProps {
     username: string
     height?: number
+    onUsernameChange?: (newUsername: string) => void
 }
 
-function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
+function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateGraphProps) {
     const [graphData, setGraphData] = useState<{ nodes: any[], links: any[] }>({ nodes: [], links: [] })
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -21,6 +22,38 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
     const [isAnalyzing, setIsAnalyzing] = useState(false)
     const graphRef = useRef<any>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const [initialUsername] = useState(username) // Store initial username for reset
+
+    // Reset function to restore graph to initial state
+    const handleReset = () => {
+        // Clear all fixed positions
+        graphData.nodes.forEach((node: any) => {
+            if (node.username !== username) {
+                node.fx = undefined
+                node.fy = undefined
+            }
+        })
+
+        // Recenter and zoom
+        if (graphRef.current) {
+            graphRef.current.d3ReheatSimulation()
+            setTimeout(() => {
+                if (graphRef.current) {
+                    graphRef.current.zoomToFit(400, 50)
+                    setTimeout(() => {
+                        if (graphRef.current) {
+                            graphRef.current.centerAt(0, 0, 300)
+                        }
+                    }, 450)
+                }
+            }, 100)
+        }
+
+        // If we navigated to a different user, reset to initial
+        if (onUsernameChange && username !== initialUsername) {
+            onUsernameChange(initialUsername)
+        }
+    }
 
     // Measure container size using ResizeObserver for reliable sizing
     useEffect(() => {
@@ -68,9 +101,55 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                     throw new Error(`API Error: ${response.status} ${response.statusText}`)
                 }
 
-                const data = await response.json()
-                console.log('Graph Data:', data)
-                setGraphData(data)
+                const rawData = await response.json()
+
+                // Transform links into nodes to prevent text overlap
+                // We create a "Label Node" for each relationship that sits between source and target
+                const nodes = [...(rawData.nodes || [])];
+                const links: any[] = [];
+
+                if (rawData.links) {
+                    rawData.links.forEach((link: any) => {
+                        const labelNodeId = `rel_${link.source}_${link.target}_${link.type}`;
+
+                        // Create the label node
+                        nodes.push({
+                            id: labelNodeId,
+                            name: link.type,     // Text to display
+                            type: 'relationship_label', // Marker
+                            val: 1
+                        });
+
+                        // Create two links: Source -> Label -> Target
+                        links.push({
+                            source: link.source,
+                            target: labelNodeId,
+                            isRelationshipPart: true
+                        });
+                        links.push({
+                            source: labelNodeId,
+                            target: link.target,
+                            isRelationshipPart: true
+                        });
+                    });
+                }
+
+                // Sort nodes so the candidate node is last (renders on top)
+                if (nodes.length > 0) {
+                    nodes.sort((a: any, b: any) => {
+                        // Candidate on top
+                        if (a.username === username) return 1;
+                        if (b.username === username) return -1;
+                        // Label nodes at bottom (so lines go under main nodes if they cross)
+                        if (a.type === 'relationship_label' && b.type !== 'relationship_label') return -1;
+                        if (a.type !== 'relationship_label' && b.type === 'relationship_label') return 1;
+                        return 0;
+                    });
+                }
+
+                const transformedData = { nodes, links };
+                console.log('Graph Data Transformed:', transformedData)
+                setGraphData(transformedData)
                 setLoading(false)
             } catch (err: any) {
                 console.error('Failed to fetch graph data:', err)
@@ -88,30 +167,37 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
             const fg = graphRef.current
 
             // Add collision force to prevent text label overlap
-            // Each node should be spaced 1.5x its size from others
+            // Significantly increased spacing to strictly prevent overlap
             fg.d3Force('collision', d3.forceCollide().radius((node: any) => {
                 const label = String(node.name || node.username || node.id)
                 const isCandidate = node.username === username
-                const fontSize = isCandidate ? 24 : 16
+
+                // Extra buffer for candidate node
+                if (isCandidate) return 100;
+
+                const fontSize = node.type === 'relationship_label' ? 12 : 16
                 const textWidth = label.length * fontSize * 0.6
-                const padding = fontSize * 0.3
+                // Large padding to ensure no overlaps
+                const padding = fontSize * (node.type === 'relationship_label' ? 0.8 : 1.5)
                 const textBoxWidth = textWidth + padding * 2
                 const textBoxHeight = fontSize + padding * 2
-                // Use the larger dimension as base size, then multiply by 1.5
+
+                // Use the larger dimension as base size
                 const nodeSize = Math.max(textBoxWidth, textBoxHeight) / 2
-                return nodeSize * 1.5
-            }).strength(1.0).iterations(5))
+                return nodeSize * (node.type === 'relationship_label' ? 1.2 : 2.0)
+            }).strength(1.0).iterations(10)) // Max strength and more iterations for rigidity
 
-            // Adjust link distance - increase to spread nodes more
-            fg.d3Force('link').distance(250).strength(0.2)
+            // Adjust link distance - reduced slightly since links are now split in two segments
+            // Total distance Source -> Label -> Target will be approx 2x this
+            fg.d3Force('link').distance(150).strength(0.5)
 
-            // Stronger charge to push nodes apart
-            fg.d3Force('charge').strength(-1200)
+            // Very strong charge to push nodes apart aggressively
+            fg.d3Force('charge').strength(-2000)
 
             // Center force
             fg.d3Force('center').strength(0.05)
 
-            // X and Y forces - reduced to allow more freedom
+            // X and Y forces
             fg.d3Force('x', d3.forceX().strength(0.02))
             fg.d3Force('y', d3.forceY().strength(0.02))
         }
@@ -147,6 +233,8 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
 
     // Generate color for each node based on its labels (node type)
     const getNodeColor = (node: any) => {
+        if (node.type === 'relationship_label') return '#999'; // Gray for links
+
         const colors = [
             '#c43787', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0',
             '#F44336', '#00BCD4', '#FF5722', '#607D8B', '#E91E63',
@@ -166,6 +254,39 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
 
         const colorIndex = Math.abs(hash) % colors.length
         return colors[colorIndex]
+    }
+
+    // Get unique node types for legend
+    const getLegendItems = () => {
+        const typeColorMap = new Map<string, string>();
+
+        // Friendly display names for labels
+        const labelDisplayNames: Record<string, string> = {
+            'Repo': 'Repository',
+            'User': 'Username',
+            'Skill': 'Skill',
+            'Location': 'Location',
+            'Education': 'Education',
+            'Candidate': 'Candidate'
+        };
+
+        graphData.nodes.forEach((node: any) => {
+            if (node.type === 'relationship_label') return; // Skip relationship labels
+
+            const nodeLabels = node.labels || []
+            const rawLabel = nodeLabels.length > 0
+                ? nodeLabels.sort().join(',')
+                : String(node.label || 'Unknown')
+
+            // Use display name if available, otherwise use raw label
+            const displayLabel = labelDisplayNames[rawLabel] || rawLabel
+
+            if (!typeColorMap.has(displayLabel)) {
+                typeColorMap.set(displayLabel, getNodeColor(node))
+            }
+        })
+
+        return Array.from(typeColorMap.entries())
     }
 
     if (loading) {
@@ -206,18 +327,98 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                 overflow: 'hidden',
                 backgroundColor: '#fff',
                 width: '100%',
-                height: `${height}px`
+                height: `${height}px`,
+                position: 'relative'
             }}
         >
+            {/* Reset Button */}
+            <button
+                onClick={handleReset}
+                style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    zIndex: 10,
+                    padding: '8px 16px',
+                    backgroundColor: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '14px',
+                    color: '#333',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fff'}
+            >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+                Reset
+            </button>
+
+            {/* Legend */}
+            <div
+                style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    left: '12px',
+                    zIndex: 10,
+                    padding: '12px',
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    fontSize: '12px',
+                    maxWidth: '200px'
+                }}
+            >
+                <div style={{ fontWeight: 600, marginBottom: '8px', color: '#333' }}>
+                    Node Types
+                </div>
+                {getLegendItems().map(([label, color]) => (
+                    <div
+                        key={label}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginBottom: '4px'
+                        }}
+                    >
+                        <div style={{
+                            width: '12px',
+                            height: '12px',
+                            borderRadius: '50%',
+                            backgroundColor: color,
+                            flexShrink: 0
+                        }} />
+                        <span style={{ color: '#555' }}>{label}</span>
+                    </div>
+                ))}
+            </div>
+
             <ForceGraph2D
                 ref={graphRef}
                 graphData={graphData}
-                nodeLabel={(node: any) => String(node.name || node.username || node.id)}
+                nodeLabel={(node: any) => {
+                    if (node.type === 'relationship_label') return ''; // No tooltip for link labels
+                    return String(node.name || node.username || node.id)
+                }}
                 nodeColor={(node: any) => getNodeColor(node)}
-                linkLabel={(link: any) => String(link.type || '')}
-                linkColor={() => '#999'}
-                linkWidth={2}
-                nodeVal={(node: any) => node.username === username ? 5 : 1}
+                // We handle link labels via nodes now, so no link labels needed
+                linkLabel={() => ''}
+                linkColor={() => '#ccc'} // Lighter link color
+                linkWidth={1.5}
+                nodeVal={(node: any) => {
+                    if (node.username === username) return 5;
+                    if (node.type === 'relationship_label') return 1;
+                    return 3;
+                }}
                 width={dimensions.width}
                 height={dimensions.height}
                 cooldownTicks={100}
@@ -226,17 +427,75 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                     // Fix node at dragged position so it doesn't snap back
                     node.fx = node.x
                     node.fy = node.y
+
+                    // Reheat simulation to ensure other nodes move away if they overlap
+                    if (graphRef.current) {
+                        graphRef.current.d3ReheatSimulation()
+                    }
                 }}
                 onNodeClick={(node: any) => {
+                    console.log('Node clicked:', node);
+
+                    // Ignore relationship label nodes
+                    if (node.type === 'relationship_label') return;
+
                     // Check if this is a Repo node
                     const isRepo = node.labels?.includes('Repo') || node.label === 'Repo'
                     if (isRepo && node.name) {
                         setSelectedRepo(node)
                         setRepoAnalysis(null) // Reset analysis
+                        return;
+                    }
+
+                    // Check if this is a User node (has username)
+                    const isUser = node.labels?.includes('User') || node.username
+                    if (isUser && node.username && node.username !== username) {
+                        if (onUsernameChange) {
+                            onUsernameChange(node.username)
+                        }
                     }
                 }}
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
-                    const label = String(node.name || node.username || node.id)
+                    const label = String(node.name || node.username || node.id);
+
+                    // Special rendering for Relationship Label Nodes
+                    if (node.type === 'relationship_label') {
+                        const fontSize = 12 / globalScale;
+                        ctx.font = `${fontSize}px Sans-Serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const textWidth = ctx.measureText(label).width;
+                        const padding = fontSize * 0.4;
+                        const bckgDimensions = [textWidth + padding, fontSize + padding];
+
+                        // White background for readability
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                        ctx.fillRect(
+                            node.x - bckgDimensions[0] / 2,
+                            node.y - bckgDimensions[1] / 2,
+                            bckgDimensions[0],
+                            bckgDimensions[1]
+                        );
+
+                        // Border for label (invisible)
+                        ctx.strokeStyle = 'transparent';
+                        ctx.lineWidth = 1 / globalScale;
+                        ctx.strokeRect(
+                            node.x - bckgDimensions[0] / 2,
+                            node.y - bckgDimensions[1] / 2,
+                            bckgDimensions[0],
+                            bckgDimensions[1]
+                        );
+
+                        ctx.fillStyle = '#666';
+                        ctx.fillText(label, node.x, node.y);
+
+                        node.__bckgDimensions = bckgDimensions;
+                        return;
+                    }
+
+                    // Standard Node Rendering
                     const isCandidate = node.username === username
                     const isRepo = node.labels?.includes('Repo') || node.label === 'Repo'
                     const baseFontSize = isCandidate ? 24 : 16
@@ -272,6 +531,7 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
 
                     node.__bckgDimensions = bckgDimensions
                 }}
+                // Simple line link since labels are now nodes
                 linkCanvasObject={(link: any, ctx, globalScale) => {
                     const start = link.source
                     const end = link.target
@@ -280,36 +540,9 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                     ctx.beginPath()
                     ctx.moveTo(start.x, start.y)
                     ctx.lineTo(end.x, end.y)
-                    ctx.strokeStyle = '#999'
+                    ctx.strokeStyle = '#ccc'
                     ctx.lineWidth = 0.5
                     ctx.stroke()
-
-                    // Draw the relationship type label
-                    const label = String(link.type || '')
-                    if (label) {
-                        const midX = (start.x + end.x) / 2
-                        const midY = (start.y + end.y) / 2
-
-                        const fontSize = (12 / globalScale)
-                        ctx.font = `${fontSize}px Sans-Serif`
-                        ctx.textAlign = 'center'
-                        ctx.textBaseline = 'middle'
-
-                        // Draw background
-                        const textWidth = ctx.measureText(label).width
-                        const padding = fontSize * 0.2
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-                        ctx.fillRect(
-                            midX - textWidth / 2 - padding,
-                            midY - fontSize / 2 - padding,
-                            textWidth + padding * 2,
-                            fontSize + padding * 2
-                        )
-
-                        // Draw text
-                        ctx.fillStyle = '#666'
-                        ctx.fillText(label, midX, midY)
-                    }
                 }}
                 nodePointerAreaPaint={(node: any, color, ctx) => {
                     ctx.fillStyle = color
@@ -373,31 +606,32 @@ function CandidateGraph({ username, height = 600 }: CandidateGraphProps) {
                             ×
                         </button>
 
-                        <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>
+                        <h1 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>
                             {selectedRepo.name}
-                        </h2>
+                        </h1>
 
                         <div style={{ marginBottom: '20px' }}>
                             <a
-                                href={`https://github.com/${selectedRepo.name}`}
+                                href={`https://github.com/${username}/${selectedRepo.name}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '8px 16px',
-                                    backgroundColor: '#24292e',
-                                    color: 'white',
+                                    gap: '6px',
+                                    color: '#4285F4', // Blue color like in the screenshot
                                     textDecoration: 'none',
-                                    borderRadius: '6px',
-                                    fontWeight: 500
+                                    fontSize: '16px',
+                                    fontWeight: 400
                                 }}
+                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                             >
-                                <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
-                                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                                View GitHub Repository
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
                                 </svg>
-                                Open in GitHub
                             </a>
                         </div>
 

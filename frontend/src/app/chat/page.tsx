@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Button } from '@/components/ui/button'
 import { apiClient, type ChatAskResponse, type ChatMessage } from '@/lib/api-client'
+import { AgentAvatar, UserAvatar } from '@/components/agent-avatar'
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -61,21 +61,29 @@ export default function ChatPage() {
 
       {/* Main container */}
       <div className="relative flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto">
-        {/* Header */}
+        {/* Header with Agent Character */}
         <div className="px-8 py-6 border-b border-black/5 dark:border-white/5">
-          <div className="flex items-end gap-4">
+          <div className="flex items-center gap-4">
+            {/* Agent character in header */}
+            <AgentAvatar state={isLoading ? 'thinking' : 'idle'} size={56} />
             <div className="flex-1">
-              <h1 className="font-pixelify text-3xl tracking-tight text-black dark:text-white transition-colors duration-500">
-                AI Talent Scout
+              <h1 className="font-pixelify text-2xl tracking-tight text-black dark:text-white transition-colors duration-500">
+                Scout
               </h1>
-              <p className="font-stzhongsong text-sm text-black/50 dark:text-white/50 mt-1">
-                Semantic search • Powered by Weaviate
+              <p className="font-stzhongsong text-sm text-black/50 dark:text-white/50">
+                {isLoading ? 'Searching candidates...' : 'AI Talent Scout • Ready to help'}
               </p>
             </div>
-            {/* Pixel-style indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg border border-black/10 dark:border-white/10">
-              <div className="w-2 h-2 bg-green-500 rounded-sm animate-pulse" />
-              <span className="font-stzhongsong text-xs text-black/70 dark:text-white/70">Online</span>
+            {/* Status badge - neo-brutalist style */}
+            <div className="flex items-center gap-2 px-3 py-1.5 border-2 border-black dark:border-white bg-white dark:bg-[#3c3c3c] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-colors duration-500">
+              <div className={`w-2 h-2 ${
+                isLoading 
+                  ? 'bg-black/40 dark:bg-white/40 animate-pulse' 
+                  : 'bg-black dark:bg-white'
+              }`} />
+              <span className="font-pixelify text-xs text-black dark:text-white">
+                {isLoading ? 'Thinking' : 'Online'}
+              </span>
             </div>
           </div>
         </div>
@@ -90,31 +98,28 @@ export default function ChatPage() {
                 className={`flex items-start gap-3 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 {/* Avatar */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-pixelify font-bold transition-colors duration-500 ${m.role === 'user'
-                    ? 'bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10'
-                    : 'bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10'
-                    }`}
-                >
-                  {m.role === 'user' ? 'U' : 'AI'}
-                </div>
+                {m.role === 'user' ? (
+                  <UserAvatar size={40} />
+                ) : (
+                  <AgentAvatar state="idle" size={40} />
+                )}
 
                 {/* Message bubble */}
-                <div className="flex-1 min-w-0 max-w-[85%]">
+                <div className={`${m.role === 'user' ? 'max-w-[75%] text-right' : 'flex-1 min-w-0 max-w-[85%]'}`}>
                   {/* Role label */}
                   <div
-                    className={`font-stzhongsong text-xs mb-1.5 ${m.role === 'user'
+                    className={`font-pixelify text-xs mb-1.5 ${m.role === 'user'
                       ? 'text-right text-black/50 dark:text-white/50'
                       : 'text-left text-black/50 dark:text-white/50'
                       }`}
                   >
-                    {m.role === 'user' ? 'You' : 'AI Scout'}
+                    {m.role === 'user' ? 'You' : 'Scout'}
                   </div>
 
                   <div
-                    className={`rounded-2xl px-5 py-4 transition-colors duration-500 ${m.role === 'user'
-                      ? 'bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10'
-                      : 'text-black dark:text-white border border-black/10 dark:border-white/10'
+                    className={`px-5 py-4 transition-colors duration-500 border-2 border-black dark:border-white bg-white dark:bg-[#3c3c3c] text-black dark:text-white text-left ${m.role === 'user'
+                      ? 'inline-block shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.3)]'
+                      : 'shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]'
                       }`}
                   >
                     {m.role === 'user' ? (
@@ -184,17 +189,18 @@ export default function ChatPage() {
 
             {isLoading && (
               <div className="flex items-start gap-3">
-                {/* AI Avatar */}
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-pixelify font-bold bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10">
-                  AI
-                </div>
+                {/* AI Avatar - Thinking state */}
+                <AgentAvatar state="thinking" size={40} />
                 {/* Typing indicator */}
                 <div className="flex-1">
-                  <div className="font-stzhongsong text-xs mb-1.5 text-black/50 dark:text-white/50">AI Scout</div>
-                  <div className="rounded-2xl px-5 py-4 border border-black/10 dark:border-white/10 inline-flex gap-1.5">
-                    <span className="w-2 h-2 bg-black/30 dark:bg-white/30 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 bg-black/30 dark:bg-white/30 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 bg-black/30 dark:bg-white/30 rounded-full animate-bounce" />
+                  <div className="font-pixelify text-xs mb-1.5 text-black/50 dark:text-white/50">Scout</div>
+                  <div className="px-5 py-4 border-2 border-black dark:border-white bg-white dark:bg-[#3c3c3c] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] inline-flex items-center gap-3 transition-colors duration-500">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-black dark:bg-white animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-2 h-2 bg-black dark:bg-white animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-2 h-2 bg-black dark:bg-white animate-bounce" />
+                    </div>
+                    <span className="font-pixelify text-xs text-black/60 dark:text-white/60">Searching...</span>
                   </div>
                 </div>
               </div>
@@ -204,7 +210,7 @@ export default function ChatPage() {
 
         {/* Input area */}
         <div className="px-8 py-6">
-          <div className="flex gap-3 items-end">
+          <div className="flex gap-4 items-end">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -212,16 +218,16 @@ export default function ChatPage() {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSend()
               }}
               placeholder="Ask about candidates... (⌘/Ctrl + Enter to send)"
-              className="flex-1 resize-none rounded-2xl border border-black/10 dark:border-white/10 bg-transparent px-5 py-4 text-black dark:text-white font-stzhongsong text-sm outline-none focus:border-black/20 dark:focus:border-white/20 transition-colors duration-200 placeholder:text-black/40 dark:placeholder:text-white/40 min-h-[68px]"
+              className="flex-1 resize-none border-2 border-black dark:border-white bg-white dark:bg-[#3c3c3c] px-5 py-4 text-black dark:text-white font-stzhongsong text-sm outline-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-colors duration-500 placeholder:text-black/40 dark:placeholder:text-white/40 min-h-[68px] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]"
               rows={2}
             />
-            <Button
+            <button
               onClick={handleSend}
               disabled={!canSend}
-              className="h-[68px] px-8 bg-[#222] text-white disabled:opacity-30 dark:bg-white dark:text-black font-pixelify text-sm rounded-2xl hover:bg-[#333] dark:hover:bg-gray-100 transition-all duration-200 disabled:cursor-not-allowed shrink-0"
+              className="h-[68px] px-8 border-2 border-black dark:border-white bg-black text-white dark:bg-white dark:text-black font-pixelify text-base shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] hover:bg-black/80 dark:hover:bg-white/90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-200 disabled:bg-black/30 disabled:dark:bg-white/30 disabled:cursor-not-allowed shrink-0 cursor-pointer"
             >
-              {isLoading ? 'Sending' : 'Send'}
-            </Button>
+              {isLoading ? 'Sending...' : 'Send'}
+            </button>
           </div>
         </div>
       </div>

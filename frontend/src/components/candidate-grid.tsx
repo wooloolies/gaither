@@ -8,11 +8,11 @@ interface CandidateGridProps {
 export default function CandidateGrid({ candidates }: CandidateGridProps) {
   if (candidates.length === 0) {
     return (
-      <div className="bg-surface rounded-lg p-12 text-center border border-border">
-        <div className="text-6xl mb-4">🔍</div>
-        <h3 className="text-2xl font-bold text-foreground mb-2">Finding Candidates...</h3>
-        <p className="text-muted-foreground">
-          The Hunter agent is searching for qualified candidates. Results will appear here.
+      <div className="bg-white dark:bg-surface rounded-2xl p-16 text-center border border-border">
+        <div className="text-7xl mb-6">🔍</div>
+        <h3 className="text-2xl font-bold text-foreground mb-3">Finding Candidates</h3>
+        <p className="text-muted-foreground text-lg">
+          The Hunter agent is searching for qualified candidates.<br/>Results will appear here soon.
         </p>
       </div>
     )
@@ -20,7 +20,7 @@ export default function CandidateGrid({ candidates }: CandidateGridProps) {
 
   return (
     <div>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {candidates.map((candidate, index) => (
           <CandidateCard key={candidate.id} candidate={candidate} index={index} />
         ))}

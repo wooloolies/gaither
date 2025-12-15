@@ -14,49 +14,47 @@ const formatTime = (seconds: number): string => {
 export default function MetricsPanel({ metrics }: MetricsPanelProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-foreground">Live Metrics</h3>
-      </div>
+      <h3 className="text-lg font-bold text-foreground">Metrics</h3>
 
       {/* Average Score (Key Metric) */}
-      <div className="bg-surface/30 rounded-lg p-5 border border-border flex flex-col items-center justify-center">
-        <div className="relative w-32 h-32 flex items-center justify-center mb-2">
+      <div className="bg-gradient-to-br from-accent-blue/5 to-accent-purple/5 rounded-2xl p-6 border border-border flex flex-col items-center justify-center">
+        <div className="relative w-36 h-36 flex items-center justify-center mb-3">
           <svg className="transform -rotate-90 w-full h-full">
-            <circle cx="64" cy="64" r="56" stroke="currentColor" strokeWidth="8" className="text-border" fill="none" />
+            <circle cx="72" cy="72" r="64" stroke="currentColor" strokeWidth="10" className="text-border" fill="none" />
             <circle
-              cx="64"
-              cy="64"
-              r="56"
+              cx="72"
+              cy="72"
+              r="64"
               stroke="currentColor"
-              strokeWidth="8"
+              strokeWidth="10"
               className="text-accent-blue"
               fill="none"
-              strokeDasharray={351}
-              strokeDashoffset={351 - (351 * metrics.averageScore) / 100}
+              strokeDasharray={402}
+              strokeDashoffset={402 - (402 * metrics.averageScore) / 100}
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-foreground">{metrics.averageScore}</span>
-            <span className="text-[10px] uppercase text-muted-foreground font-mono">AVG FIT</span>
+            <span className="text-4xl font-bold text-foreground">{metrics.averageScore}</span>
+            <span className="text-xs text-muted-foreground mt-1">Avg Fit</span>
           </div>
         </div>
-        <div className="text-xs text-center text-muted-foreground">Target Score: 75+</div>
+        <div className="text-sm text-center text-muted-foreground">Target: 75+</div>
       </div>
 
-      {/* Simple Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-surface/30 p-4 rounded-lg border border-border">
-          <div className="text-muted-foreground text-xs uppercase font-mono mb-1">Found</div>
-          <div className="text-2xl font-bold text-foreground">{metrics.totalFound}</div>
+      {/* Stats Grid */}
+      <div className="space-y-4">
+        <div className="bg-white dark:bg-surface/30 p-5 rounded-xl border border-border">
+          <div className="text-muted-foreground text-xs mb-2">Candidates Found</div>
+          <div className="text-3xl font-bold text-foreground">{metrics.totalFound}</div>
         </div>
-        <div className="bg-surface/30 p-4 rounded-lg border border-border">
-          <div className="text-muted-foreground text-xs uppercase font-mono mb-1">Msgs</div>
-          <div className="text-2xl font-bold text-foreground">{metrics.messagesGenerated}</div>
+        <div className="bg-white dark:bg-surface/30 p-5 rounded-xl border border-border">
+          <div className="text-muted-foreground text-xs mb-2">Messages Generated</div>
+          <div className="text-3xl font-bold text-foreground">{metrics.messagesGenerated}</div>
         </div>
-        <div className="col-span-2 bg-surface/30 p-4 rounded-lg border border-border">
-          <div className="text-muted-foreground text-xs uppercase font-mono mb-1">Elapsed Time</div>
-          <div className="text-2xl font-bold text-foreground font-mono">{formatTime(metrics.timeElapsed)}</div>
+        <div className="bg-white dark:bg-surface/30 p-5 rounded-xl border border-border">
+          <div className="text-muted-foreground text-xs mb-2">Time Elapsed</div>
+          <div className="text-3xl font-bold text-foreground">{formatTime(metrics.timeElapsed)}</div>
         </div>
       </div>
     </div>

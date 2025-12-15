@@ -69,8 +69,8 @@ export function RecruiterForm() {
   }, [isLinkedIn, session?.user, form])
 
   return (
-    <div className="bg-panel border border-border p-8 rounded-2xl shadow-xl">
-      <h1 className="text-3xl font-bold mb-6 text-foreground">Recruiter Fill-out Form</h1>
+    <div className="bg-white dark:bg-[#3c3c3c] border-2 border-black dark:border-white p-8 md:p-10 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-colors duration-500">
+      <h1 className="font-pixelify text-3xl md:text-4xl mb-8 text-black dark:text-white">Recruiter Fill-out Form</h1>
 
       <form
         onSubmit={(e) => {
@@ -80,6 +80,145 @@ export function RecruiterForm() {
         }}
         className="space-y-6"
       >
+        {/* Recruiter and Company */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Your Name */}
+          <form.AppField name="recruiter_name">
+            {(field) => (
+              <field.TextField
+                label="Your Name"
+                placeholder="Enter your name"
+              />
+            )}
+          </form.AppField>
+
+          {/* Company Name */}
+          <form.AppField name="company_name">
+            {(field) => (
+              <field.TextField
+                label="Company Name"
+                required
+                placeholder="Your company name"
+              />
+            )}
+          </form.AppField>
+        </div>
+
+        {/* Role Basics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Target Role Title */}
+          <form.AppField name="title">
+            {(field) => (
+              <field.TextField
+                label="Target Role Title"
+                required
+                placeholder="e.g. Senior Software Engineer"
+              />
+            )}
+          </form.AppField>
+
+          {/* Location */}
+          <form.AppField name="location">
+            {(field) => (
+              <field.TextField
+                label="Location"
+                required
+                placeholder="e.g. San Francisco, CA"
+              />
+            )}
+          </form.AppField>
+        </div>
+
+        {/* Key Responsibilities */}
+        <form.AppField name="description">
+          {(field) => (
+            <field.TextareaField
+              label="Key Responsibilities"
+              required
+              rows={6}
+              placeholder="What are you expecting them to do?"
+            />
+          )}
+        </form.AppField>
+
+        {/* Core Requirements */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Core Skill Requirement */}
+          <form.AppField name="core_skill_requirement">
+            {(field) => (
+              <field.TextField
+                label="Core Skill Requirement"
+                required
+                placeholder="e.g. Python, SQL, React"
+              />
+            )}
+          </form.AppField>
+
+          {/* Familiar With */}
+          <form.AppField name="familiar_with">
+            {(field) => (
+              <field.TextField
+                label="What are they familiar with?"
+                placeholder="e.g. AWS, Docker, Kubernetes"
+              />
+            )}
+          </form.AppField>
+        </div>
+
+        {/* Work Setup */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Work Type */}
+          <form.AppField name="work_type">
+            {(field) => (
+              <field.SelectField
+                label="Work Type"
+                ariaLabel="Work type selection"
+                options={[
+                  { value: '', label: 'Any' },
+                  { value: 'onsite' as const, label: 'Onsite' },
+                  { value: 'hybrid' as const, label: 'Hybrid' },
+                  { value: 'remote' as const, label: 'Remote' },
+                ]}
+              />
+            )}
+          </form.AppField>
+
+          {/* Language Requirement */}
+          <form.AppField name="language_requirement">
+            {(field) => (
+              <field.TextField
+                label="Language Requirement"
+                placeholder="e.g. English, Spanish"
+              />
+            )}
+          </form.AppField>
+        </div>
+
+        {/* Years of Experience and Minimum Required Degree */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Years of Experience */}
+          <form.AppField name="years_of_experience">
+            {(field) => (
+              <field.NumberField
+                label="Years of Experience"
+                min={0}
+                max={50}
+                placeholder="1"
+              />
+            )}
+          </form.AppField>
+
+          {/* Minimum Required Degree */}
+          <form.AppField name="minimum_required_degree">
+            {(field) => (
+              <field.TextField
+                label="Minimum Required Degree"
+                placeholder="e.g. Bachelor's degree in Computer Science"
+              />
+            )}
+          </form.AppField>
+        </div>
+
         {/* Model Selection and Grade */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Model Selection */}
@@ -106,145 +245,6 @@ export function RecruiterForm() {
                 min={50}
                 max={90}
                 placeholder="50-90"
-              />
-            )}
-          </form.AppField>
-        </div>
-
-        {/* Target Role Title and Company Name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Target Role Title */}
-          <form.AppField name="title">
-            {(field) => (
-              <field.TextField
-                label="Target Role Title"
-                required
-                placeholder="e.g. Senior Software Engineer"
-              />
-            )}
-          </form.AppField>
-
-          {/* Company Name */}
-          <form.AppField name="company_name">
-            {(field) => (
-              <field.TextField
-                label="Company Name"
-                required
-                placeholder="Your company name"
-              />
-            )}
-          </form.AppField>
-        </div>
-
-        {/* Your Name and Language Requirement */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Your Name */}
-          <form.AppField name="recruiter_name">
-            {(field) => (
-              <field.TextField
-                label="Your Name"
-                placeholder="Enter your name"
-              />
-            )}
-          </form.AppField>
-
-          {/* Language Requirement */}
-          <form.AppField name="language_requirement">
-            {(field) => (
-              <field.TextField
-                label="Language Requirement"
-                placeholder="e.g. English, Spanish"
-              />
-            )}
-          </form.AppField>
-        </div>
-
-        {/* Key Responsibilities */}
-        <form.AppField name="description">
-          {(field) => (
-            <field.TextareaField
-              label="Key Responsibilities"
-              required
-              rows={6}
-              placeholder="What are you expecting them to do?"
-            />
-          )}
-        </form.AppField>
-
-        {/* Core Skill Requirement and Location */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Core Skill Requirement */}
-          <form.AppField name="core_skill_requirement">
-            {(field) => (
-              <field.TextField
-                label="Core Skill Requirement"
-                required
-                placeholder="e.g. Python, SQL, React"
-              />
-            )}
-          </form.AppField>
-
-          {/* Location */}
-          <form.AppField name="location">
-            {(field) => (
-              <field.TextField
-                label="Location"
-                required
-                placeholder="e.g. San Francisco, CA"
-              />
-            )}
-          </form.AppField>
-        </div>
-
-        {/* Familiar With and Work Type */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Familiar With */}
-          <form.AppField name="familiar_with">
-            {(field) => (
-              <field.TextField
-                label="What are they familiar with?"
-                placeholder="e.g. AWS, Docker, Kubernetes"
-              />
-            )}
-          </form.AppField>
-
-          {/* Work Type */}
-          <form.AppField name="work_type">
-            {(field) => (
-              <field.SelectField
-                label="Work Type"
-                ariaLabel="Work type selection"
-                options={[
-                  { value: '', label: 'Any' },
-                  { value: 'onsite' as const, label: 'Onsite' },
-                  { value: 'hybrid' as const, label: 'Hybrid' },
-                  { value: 'remote' as const, label: 'Remote' },
-                ]}
-              />
-            )}
-          </form.AppField>
-        </div>
-
-        {/* Years of Experience and Minimum Required Degree */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Years of Experience */}
-          <form.AppField name="years_of_experience">
-            {(field) => (
-              <field.NumberField
-                label="Years of Experience"
-                min={0}
-                max={50}
-                placeholder="1"
-              />
-            )}
-          </form.AppField>
-
-          {/* Minimum Required Degree */}
-          <form.AppField name="minimum_required_degree">
-            {(field) => (
-              <field.TextField
-                label="Minimum Required Degree"
-                placeholder="e.g. Bachelor's degree in Computer Science"
               />
             )}
           </form.AppField>

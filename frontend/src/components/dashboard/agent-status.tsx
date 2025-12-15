@@ -3,33 +3,7 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import type { AgentStates, WebSocketEvent } from '@/store/agent-store'
-
-const AGENT_CONFIG = {
-  hunter: {
-    name: 'HUNTER',
-    icon: '🎯',
-    color: 'text-emerald-500',
-    dotBg: 'bg-emerald-500',
-    badgeBg: 'bg-emerald-500/10',
-    badgeBorder: 'border-emerald-500/20',
-  },
-  analyzer: {
-    name: 'ANALYZER',
-    icon: '🧠',
-    color: 'text-accent-blue',
-    dotBg: 'bg-accent-blue',
-    badgeBg: 'bg-accent-blue/10',
-    badgeBorder: 'border-accent-blue/20',
-  },
-  engager: {
-    name: 'ENGAGER',
-    icon: '💬',
-    color: 'text-accent-purple',
-    dotBg: 'bg-accent-purple',
-    badgeBg: 'bg-accent-purple/10',
-    badgeBorder: 'border-accent-purple/20',
-  },
-} as const
+import AgentSwarm from './agent-swarm'
 
 interface AgentStatusProps {
   agentStates: AgentStates
@@ -48,55 +22,29 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Agent Status Rows */}
-      <div className="p-6 border-b border-border space-y-4 bg-surface/10">
-        <h3 className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-4">Agent Swarm Status</h3>
-
-        {Object.entries(AGENT_CONFIG).map(([key, config]) => {
-          const state = agentStates[key as keyof AgentStates]
-          const isActive = state === 'active'
-
-          return (
-            <div key={key} className="flex items-center justify-between group">
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${isActive ? `animate-pulse ${config.dotBg}` : 'bg-border'}`} />
-                <span className={`font-mono text-sm ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
-                  {config.name}
-                </span>
-              </div>
-              {isActive && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`text-xs ${config.color} ${config.badgeBg} px-2 py-0.5 rounded border ${config.badgeBorder}`}
-                >
-                  RUNNING
-                </motion.span>
-              )}
-              {state === 'completed' && <span className="text-xs text-state-success">DONE</span>}
-            </div>
-          )
-        })}
+      {/* Agent Swarm Visualization */}
+      <div className="p-4 border-b border-border">
+        <AgentSwarm agentStates={agentStates} events={events} />
       </div>
 
-      {/* Terminal Output */}
-      <div className="flex-1 flex flex-col min-h-0 bg-surface/40">
-        <div className="p-3 border-b border-border/50 sticky top-0 bg-panel/95 backdrop-blur z-10">
-          <h3 className="text-xs font-mono text-muted-foreground">SYSTEM LOGS</h3>
+      {/* Activity Log */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="p-4 border-b border-border sticky top-0 bg-white/95 dark:bg-panel/95 backdrop-blur z-10">
+          <h3 className="text-sm font-semibold text-foreground">Activity Log</h3>
         </div>
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-2">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
           <AnimatePresence initial={false}>
             {events.length === 0 ? (
-              <div className="text-muted-foreground/70 italic text-center mt-10">System ready. Waiting for initialization...</div>
+              <div className="text-muted-foreground text-sm text-center mt-10">Waiting for agents to start...</div>
             ) : (
               events.map((event, i) => (
                 <motion.div
                   key={event.timestamp ? String(event.timestamp) : i}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex gap-3"
+                  className="flex gap-3 p-2 rounded-lg hover:bg-surface/30 transition-colors"
                 >
-                  <span className="text-muted-foreground/60 text-[10px] w-14 shrink-0">
+                  <span className="text-muted-foreground text-[10px] w-12 shrink-0 mt-0.5">
                     {event.timestamp
                       ? new Date(event.timestamp).toLocaleTimeString([], {
                           hour12: false,
@@ -106,19 +54,21 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
                         })
                       : '--:--:--'}
                   </span>
-                  <span
-                    className={
-                      event.event.includes('hunter')
-                        ? 'text-emerald-500 dark:text-emerald-400'
-                        : event.event.includes('analyzer')
-                          ? 'text-blue-500 dark:text-blue-400'
-                          : event.event.includes('engager')
-                            ? 'text-purple-500 dark:text-purple-400'
-                            : 'text-muted-foreground'
-                    }
-                  >
-                    {`>`} {event.data?.message || event.event.replace(/_/g, ' ')}
-                  </span>
+                  <div className="flex-1">
+                    <span
+                      className={
+                        event.event.includes('hunter')
+                          ? 'text-emerald-600 dark:text-emerald-500 text-xs font-medium'
+                          : event.event.includes('analyzer')
+                            ? 'text-blue-600 dark:text-blue-500 text-xs font-medium'
+                            : event.event.includes('engager')
+                              ? 'text-purple-600 dark:text-purple-500 text-xs font-medium'
+                              : 'text-muted-foreground text-xs'
+                      }
+                    >
+                      {event.data?.message || event.event.replace(/_/g, ' ')}
+                    </span>
+                  </div>
                 </motion.div>
               ))
             )}
