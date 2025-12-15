@@ -178,7 +178,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
           {/* Center: Candidates (Main Interface) */}
           <div className="col-span-6 bg-panel border border-border rounded-xl overflow-hidden flex flex-col shadow-sm">
             <div className="p-4 border-b border-border flex items-center justify-between bg-surface/30">
-              <h2 className="font-semibold text-white">Candidate Candidates</h2>
+              <h2 className="font-semibold text-white">Candidates</h2>
               <span className="text-xs text-muted-foreground font-mono">{candidates.length} FOUND</span>
             </div>
             <div className="p-4 overflow-y-auto flex-1">
