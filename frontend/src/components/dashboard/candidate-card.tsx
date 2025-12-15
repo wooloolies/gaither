@@ -3,6 +3,14 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import type { Candidate } from '@/store/agent-store'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import CandidateGraph from '@/features/neo4j/components/candidate-graph'
 
 interface CandidateCardProps {
   candidate: Candidate
@@ -18,6 +26,7 @@ const scoreColor = (score: number) => {
 
 export default function CandidateCard({ candidate, index }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [showGraph, setShowGraph] = useState(false)
 
   return (
     <motion.div
@@ -84,9 +93,17 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
         <button onClick={() => setExpanded(!expanded)} className="text-xs text-muted-foreground hover:text-white transition-colors">
           {expanded ? 'Hide Details' : 'View Generated Message'}
         </button>
-        <button className="text-xs font-medium bg-white text-black px-3 py-1.5 rounded hover:bg-gray-200 transition-colors">
-          Contact Candidate
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowGraph(true)}
+            className="text-xs font-medium bg-accent-blue/10 text-accent-blue border border-accent-blue/30 px-3 py-1.5 rounded hover:bg-accent-blue/20 transition-colors"
+          >
+            View Graph
+          </button>
+          <button className="text-xs font-medium bg-white text-black px-3 py-1.5 rounded hover:bg-gray-200 transition-colors">
+            Contact Candidate
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -105,6 +122,20 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={showGraph} onOpenChange={setShowGraph}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] w-full h-full p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">{candidate.username}&apos;s Network Graph</DialogTitle>
+            <DialogDescription>
+              Explore {candidate.username}&apos;s repository connections and relationships
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden" style={{ height: 'calc(90vh - 120px)' }}>
+            <CandidateGraph username={candidate.username} height={700} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/react-devtools": "^0.8.4",
     "@tanstack/react-form": "^1.27.3",
