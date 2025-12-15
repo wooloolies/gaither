@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Button } from '@/components/ui/button'
 import { apiClient, type ChatAskResponse, type ChatMessage } from '@/lib/api-client'
+import { AgentAvatar, UserAvatar } from '@/components/agent-avatar'
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -61,21 +62,33 @@ export default function ChatPage() {
 
       {/* Main container */}
       <div className="relative flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto">
-        {/* Header */}
+        {/* Header with Agent Character */}
         <div className="px-8 py-6 border-b border-black/5 dark:border-white/5">
-          <div className="flex items-end gap-4">
+          <div className="flex items-center gap-4">
+            {/* Agent character in header */}
+            <AgentAvatar state={isLoading ? 'thinking' : 'idle'} size={56} />
             <div className="flex-1">
-              <h1 className="font-pixelify text-3xl tracking-tight text-black dark:text-white transition-colors duration-500">
-                AI Talent Scout
+              <h1 className="font-pixelify text-2xl tracking-tight text-black dark:text-white transition-colors duration-500">
+                Scout
               </h1>
-              <p className="font-stzhongsong text-sm text-black/50 dark:text-white/50 mt-1">
-                Semantic search • Powered by Weaviate
+              <p className="font-stzhongsong text-sm text-black/50 dark:text-white/50">
+                {isLoading ? 'Searching candidates...' : 'AI Talent Scout • Ready to help'}
               </p>
             </div>
-            {/* Pixel-style indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/5 dark:bg-white/5 rounded-lg border border-black/10 dark:border-white/10">
-              <div className="w-2 h-2 bg-green-500 rounded-sm animate-pulse" />
-              <span className="font-stzhongsong text-xs text-black/70 dark:text-white/70">Online</span>
+            {/* Status badge */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors duration-300 ${
+              isLoading 
+                ? 'bg-yellow-500/10 border-yellow-500/30 dark:bg-yellow-400/10 dark:border-yellow-400/30'
+                : 'bg-green-500/10 border-green-500/30 dark:bg-green-400/10 dark:border-green-400/30'
+            }`}>
+              <div className={`w-2 h-2 rounded-sm ${
+                isLoading 
+                  ? 'bg-yellow-500 dark:bg-yellow-400 animate-pulse' 
+                  : 'bg-green-500 dark:bg-green-400'
+              }`} />
+              <span className="font-stzhongsong text-xs text-black/70 dark:text-white/70">
+                {isLoading ? 'Thinking' : 'Online'}
+              </span>
             </div>
           </div>
         </div>
@@ -90,14 +103,11 @@ export default function ChatPage() {
                 className={`flex items-start gap-3 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 {/* Avatar */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-pixelify font-bold transition-colors duration-500 ${m.role === 'user'
-                    ? 'bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10'
-                    : 'bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10'
-                    }`}
-                >
-                  {m.role === 'user' ? 'U' : 'AI'}
-                </div>
+                {m.role === 'user' ? (
+                  <UserAvatar size={40} />
+                ) : (
+                  <AgentAvatar state="idle" size={40} />
+                )}
 
                 {/* Message bubble */}
                 <div className="flex-1 min-w-0 max-w-[85%]">
@@ -108,7 +118,7 @@ export default function ChatPage() {
                       : 'text-left text-black/50 dark:text-white/50'
                       }`}
                   >
-                    {m.role === 'user' ? 'You' : 'AI Scout'}
+                    {m.role === 'user' ? 'You' : 'Scout'}
                   </div>
 
                   <div
@@ -184,17 +194,18 @@ export default function ChatPage() {
 
             {isLoading && (
               <div className="flex items-start gap-3">
-                {/* AI Avatar */}
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-pixelify font-bold bg-black/5 dark:bg-white/5 text-black dark:text-white border border-black/10 dark:border-white/10">
-                  AI
-                </div>
+                {/* AI Avatar - Thinking state */}
+                <AgentAvatar state="thinking" size={40} />
                 {/* Typing indicator */}
                 <div className="flex-1">
-                  <div className="font-stzhongsong text-xs mb-1.5 text-black/50 dark:text-white/50">AI Scout</div>
-                  <div className="rounded-2xl px-5 py-4 border border-black/10 dark:border-white/10 inline-flex gap-1.5">
-                    <span className="w-2 h-2 bg-black/30 dark:bg-white/30 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 bg-black/30 dark:bg-white/30 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 bg-black/30 dark:bg-white/30 rounded-full animate-bounce" />
+                  <div className="font-stzhongsong text-xs mb-1.5 text-black/50 dark:text-white/50">Scout</div>
+                  <div className="rounded-2xl px-5 py-4 border border-black/10 dark:border-white/10 inline-flex items-center gap-3">
+                    <div className="flex gap-1.5">
+                      <span className="w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-bounce" />
+                    </div>
+                    <span className="font-stzhongsong text-xs text-black/40 dark:text-white/40">Searching database...</span>
                   </div>
                 </div>
               </div>
