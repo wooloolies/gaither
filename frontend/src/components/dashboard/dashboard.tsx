@@ -99,7 +99,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <h1 className="text-6xl font-black mb-6 tracking-tight text-white">Gaither</h1>
+            <h1 className="text-6xl font-black mb-6 tracking-tight text-foreground">Gaither</h1>
             <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto">
               Autonomous Multi-Agent Recruitment System
             </p>
@@ -146,7 +146,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
         {/* Header Bar */}
         <header className="flex items-center justify-between bg-panel border border-border px-6 py-4 rounded-xl shadow-sm shrink-0">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Gaither <span className="text-accent-blue text-sm font-mono ml-2">v2.0</span>
             </h1>
             <div
@@ -160,7 +160,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
           </div>
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-white hover:bg-surface rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg transition-colors"
           >
             Stop & Reset
           </button>
@@ -178,7 +178,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
           {/* Center: Candidates (Main Interface) */}
           <div className="col-span-6 bg-panel border border-border rounded-xl overflow-hidden flex flex-col shadow-sm">
             <div className="p-4 border-b border-border flex items-center justify-between bg-surface/30">
-              <h2 className="font-semibold text-white">Candidates</h2>
+              <h2 className="font-semibold text-foreground">Candidates</h2>
               <span className="text-xs text-muted-foreground font-mono">{candidates.length} FOUND</span>
             </div>
             <div className="p-4 overflow-y-auto flex-1">
@@ -189,7 +189,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
                 <button
                   onClick={handleFindMore}
                   disabled={isLoading || agentStates.hunter === 'active'}
-                  className="w-full px-4 py-3 text-sm font-medium text-white bg-accent-blue hover:bg-accent-blue/80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 text-sm font-medium text-white dark:text-white bg-accent-blue hover:bg-accent-blue/80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading || agentStates.hunter === 'active' ? 'Searching...' : '🔍 Find More Candidates'}
                 </button>

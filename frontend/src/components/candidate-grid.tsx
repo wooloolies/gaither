@@ -8,10 +8,10 @@ interface CandidateGridProps {
 export default function CandidateGrid({ candidates }: CandidateGridProps) {
   if (candidates.length === 0) {
     return (
-      <div className="bg-slate-800 rounded-lg p-12 text-center">
+      <div className="bg-surface rounded-lg p-12 text-center border border-border">
         <div className="text-6xl mb-4">🔍</div>
-        <h3 className="text-2xl font-bold text-white mb-2">Finding Candidates...</h3>
-        <p className="text-slate-400">
+        <h3 className="text-2xl font-bold text-foreground mb-2">Finding Candidates...</h3>
+        <p className="text-muted-foreground">
           The Hunter agent is searching for qualified candidates. Results will appear here.
         </p>
       </div>

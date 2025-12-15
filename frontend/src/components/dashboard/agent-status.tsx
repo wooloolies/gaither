@@ -59,8 +59,8 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
           return (
             <div key={key} className="flex items-center justify-between group">
               <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${isActive ? `animate-pulse ${config.dotBg}` : 'bg-gray-700'}`} />
-                <span className={`font-mono text-sm ${isActive ? 'text-white font-bold' : 'text-muted-foreground'}`}>
+                <div className={`w-2 h-2 rounded-full ${isActive ? `animate-pulse ${config.dotBg}` : 'bg-border'}`} />
+                <span className={`font-mono text-sm ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
                   {config.name}
                 </span>
               </div>
@@ -80,14 +80,14 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
       </div>
 
       {/* Terminal Output */}
-      <div className="flex-1 flex flex-col min-h-0 bg-black/40">
+      <div className="flex-1 flex flex-col min-h-0 bg-surface/40">
         <div className="p-3 border-b border-border/50 sticky top-0 bg-panel/95 backdrop-blur z-10">
           <h3 className="text-xs font-mono text-muted-foreground">SYSTEM LOGS</h3>
         </div>
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-2">
           <AnimatePresence initial={false}>
             {events.length === 0 ? (
-              <div className="text-gray-700 italic text-center mt-10">System ready. Waiting for initialization...</div>
+              <div className="text-muted-foreground/70 italic text-center mt-10">System ready. Waiting for initialization...</div>
             ) : (
               events.map((event, i) => (
                 <motion.div
@@ -96,7 +96,7 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex gap-3"
                 >
-                  <span className="text-gray-600 text-[10px] w-14 shrink-0">
+                  <span className="text-muted-foreground/60 text-[10px] w-14 shrink-0">
                     {event.timestamp
                       ? new Date(event.timestamp).toLocaleTimeString([], {
                           hour12: false,
@@ -109,12 +109,12 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
                   <span
                     className={
                       event.event.includes('hunter')
-                        ? 'text-emerald-400'
+                        ? 'text-emerald-500 dark:text-emerald-400'
                         : event.event.includes('analyzer')
-                          ? 'text-blue-400'
+                          ? 'text-blue-500 dark:text-blue-400'
                           : event.event.includes('engager')
-                            ? 'text-purple-400'
-                            : 'text-gray-400'
+                            ? 'text-purple-500 dark:text-purple-400'
+                            : 'text-muted-foreground'
                     }
                   >
                     {`>`} {event.data?.message || event.event.replace(/_/g, ' ')}
