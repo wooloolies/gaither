@@ -33,14 +33,14 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="group bg-surface border border-border rounded-lg p-5 hover:border-border-high transition-all"
+      className="group bg-white dark:bg-surface border border-border rounded-2xl p-6 hover:shadow-md transition-all"
     >
       <div className="flex items-start gap-5">
         {/* Avatar / Initials */}
-        <div className="w-12 h-12 rounded-lg bg-panel border border-border flex items-center justify-center shrink-0 text-lg font-bold text-muted-foreground">
+        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-accent-blue/20 to-accent-purple/20 border border-border flex items-center justify-center shrink-0 text-xl font-bold text-foreground">
           {candidate.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={candidate.avatar} alt={candidate.username} className="w-full h-full rounded-lg object-cover" />
+            <img src={candidate.avatar} alt={candidate.username} className="w-full h-full rounded-xl object-cover" />
           ) : (
             candidate.username?.[0]?.toUpperCase()
           )}
@@ -70,7 +70,7 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           {/* Skills */}
           <div className="flex flex-wrap gap-2 mb-3">
             {candidate.skills?.slice(0, 5).map((skill, i) => (
-              <span key={skill ?? i} className="px-2 py-0.5 bg-panel border border-border rounded text-[10px] text-muted-foreground">
+              <span key={skill ?? i} className="px-3 py-1 bg-accent-blue/10 border border-accent-blue/20 rounded-lg text-xs text-accent-blue font-medium">
                 {skill}
               </span>
             ))}
@@ -89,19 +89,19 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
-        <button onClick={() => setExpanded(!expanded)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-          {expanded ? 'Hide Details' : 'View Generated Message'}
+      <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
+        <button onClick={() => setExpanded(!expanded)} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
+          {expanded ? '↑ Hide Details' : '↓ View Message'}
         </button>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={() => setShowGraph(true)}
-            className="text-xs font-medium bg-accent-blue/10 text-accent-blue border border-accent-blue/30 px-3 py-1.5 rounded hover:bg-accent-blue/20 transition-colors"
+            className="text-sm font-medium bg-white dark:bg-accent-blue/10 text-accent-blue border border-accent-blue/30 px-4 py-2 rounded-xl hover:shadow-md transition-all"
           >
             View Graph
           </button>
-          <button className="text-xs font-medium bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90 transition-colors">
-            Contact Candidate
+          <button className="text-sm font-medium bg-accent-blue text-white px-4 py-2 rounded-xl hover:bg-accent-blue/90 hover:shadow-md transition-all">
+            Contact
           </button>
         </div>
       </div>
@@ -114,8 +114,8 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 p-4 bg-surface/50 rounded border border-border/50 font-mono text-xs text-muted-foreground whitespace-pre-wrap">
-              Subject: Opportunity at...
+            <div className="mt-5 p-5 bg-surface/30 dark:bg-surface/50 rounded-xl border border-border text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+              <strong className="text-foreground">Subject:</strong> Opportunity at...
               {'\n\n'}
               Hi {candidate.username}, I noticed your work on...
             </div>

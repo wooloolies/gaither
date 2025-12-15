@@ -83,46 +83,49 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
 
   if (!jobId) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
-        {/* Subtle Background Pattern */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-          }}
-        />
+      <div className="relative min-h-screen bg-background flex items-center justify-center p-6">
+        {/* Subtle pixel grid background */}
+        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none">
+          <div
+            className="w-full h-full"
+            style={{
+              backgroundImage:
+                'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+              backgroundSize: '20px 20px',
+            }}
+          />
+        </div>
 
-        <div className="relative z-10 max-w-4xl w-full">
+        <div className="relative z-10 max-w-6xl w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
-            <h1 className="text-6xl font-black mb-6 tracking-tight text-foreground">Gaither</h1>
+            <h1 className="font-pixelify text-5xl md:text-6xl mb-4 tracking-tight text-foreground">Gaither</h1>
             <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto">
               Autonomous Multi-Agent Recruitment System
             </p>
           </motion.div>
 
           {/* Feature Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {[
-              { title: 'Hunter Agent', desc: 'Autonomous GitHub Scanning', color: 'text-accent-blue' },
-              { title: 'Analyzer Agent', desc: 'Deep Code Evaluation', color: 'text-accent-cyan' },
-              { title: 'Engager Agent', desc: 'Personalized Outreach', color: 'text-accent-purple' },
+              { title: 'Hunter', desc: 'Autonomous GitHub Scanning', color: 'text-emerald-500' },
+              { title: 'Analyzer', desc: 'Deep Code Evaluation', color: 'text-blue-500' },
+              { title: 'Engager', desc: 'Personalized Outreach', color: 'text-purple-500' },
             ].map((feature, i) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
-                className="bg-panel border border-border p-6 rounded-xl hover:border-border-high transition-colors text-center"
+                className="bg-white dark:bg-panel border border-border p-8 rounded-2xl hover:shadow-lg transition-all text-center"
               >
-                <div className={`font-mono text-xs font-bold uppercase tracking-wider mb-2 ${feature.color}`}>
+                <div className={`text-2xl font-bold mb-2 ${feature.color}`}>
                   {feature.title}
                 </div>
-                <div className="text-muted-foreground text-sm">{feature.desc}</div>
+                <div className="text-muted-foreground">{feature.desc}</div>
               </motion.div>
             ))}
           </div>
@@ -131,7 +134,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 }}
-            className="bg-panel border border-border p-8 rounded-2xl shadow-xl"
+            className="bg-white dark:bg-panel border border-border p-8 rounded-2xl shadow-xl"
           >
             <JobForm onSubmit={handleJobSubmit} isLoading={isLoading} />
           </motion.div>
@@ -141,55 +144,67 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-[1600px] mx-auto h-[calc(100vh-3rem)] flex flex-col gap-6">
+    <div className="relative min-h-screen bg-background p-8">
+      {/* Subtle pixel grid background */}
+      <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none">
+        <div
+          className="w-full h-full"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-[1600px] mx-auto h-[calc(100vh-4rem)] flex flex-col gap-8">
         {/* Header Bar */}
-        <header className="flex items-center justify-between bg-panel border border-border px-6 py-4 rounded-xl shadow-sm shrink-0">
+        <header className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Gaither <span className="text-accent-blue text-sm font-mono ml-2">v2.0</span>
+            <h1 className="font-pixelify text-3xl md:text-4xl tracking-tight text-foreground">
+              Gaither
             </h1>
             <div
-              className={`px-3 py-1 rounded-full text-xs font-mono border ${isConnected
-                ? 'bg-green-500/10 border-green-500/20 text-green-500'
-                : 'bg-red-500/10 border-red-500/20 text-red-500'
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border ${isConnected
+                ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-500'
+                : 'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-500'
                 }`}
             >
-              {isConnected ? 'SYSTEM ONLINE' : 'DISCONNECTED'}
+              {isConnected ? '● Online' : '● Offline'}
             </div>
           </div>
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg transition-colors"
+            className="px-6 py-2.5 text-sm font-medium text-foreground bg-white dark:bg-panel border border-border rounded-xl hover:shadow-md transition-all"
           >
-            Stop & Reset
+            New Search
           </button>
         </header>
 
-        {/* Bento Grid Layout */}
-        <div className="grid grid-cols-12 gap-6 min-h-0 flex-1">
-          {/* Left: Agent Status (Mission Control) */}
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-12 gap-8 min-h-0 flex-1">
+          {/* Left: Agent Status */}
           <div className="col-span-3 flex flex-col gap-6 overflow-hidden">
-            <div className="flex-1 bg-panel border border-border rounded-xl overflow-hidden flex flex-col relative shadow-sm">
+            <div className="flex-1 bg-white dark:bg-panel border border-border rounded-2xl overflow-hidden flex flex-col shadow-lg">
               <AgentStatus agentStates={agentStates} events={events} />
             </div>
           </div>
 
-          {/* Center: Candidates (Main Interface) */}
-          <div className="col-span-6 bg-panel border border-border rounded-xl overflow-hidden flex flex-col shadow-sm">
-            <div className="p-4 border-b border-border flex items-center justify-between bg-surface/30">
-              <h2 className="font-semibold text-foreground">Candidates</h2>
-              <span className="text-xs text-muted-foreground font-mono">{candidates.length} FOUND</span>
+          {/* Center: Candidates */}
+          <div className="col-span-6 bg-white dark:bg-panel border border-border rounded-2xl overflow-hidden flex flex-col shadow-lg">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground">Candidates</h2>
+              <span className="text-sm text-muted-foreground">{candidates.length} found</span>
             </div>
-            <div className="p-4 overflow-y-auto flex-1">
+            <div className="p-6 overflow-y-auto flex-1">
               <CandidateGrid candidates={candidates} />
             </div>
             {candidates.length > 0 && (
-              <div className="p-4 border-t border-border bg-surface/30">
+              <div className="p-6 border-t border-border">
                 <button
                   onClick={handleFindMore}
                   disabled={isLoading || agentStates.hunter === 'active'}
-                  className="w-full px-4 py-3 text-sm font-medium text-white dark:text-white bg-accent-blue hover:bg-accent-blue/80 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-6 py-3 text-sm font-medium text-white bg-accent-blue hover:bg-accent-blue/90 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                 >
                   {isLoading || agentStates.hunter === 'active' ? 'Searching...' : '🔍 Find More Candidates'}
                 </button>
@@ -197,9 +212,9 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
             )}
           </div>
 
-          {/* Right: Metrics (Data Viz) */}
+          {/* Right: Metrics */}
           <div className="col-span-3 flex flex-col gap-6">
-            <div className=" bg-panel border border-border rounded-xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-panel border border-border rounded-2xl p-6 shadow-lg">
               <MetricsPanel metrics={metrics} />
             </div>
           </div>

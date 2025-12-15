@@ -17,6 +17,17 @@ export default function HomePage() {
 
   return (
     <div className="relative overflow-hidden transition-colors duration-500 bg-white dark:bg-[#3c3c3c]">
+      {/* Subtle pixel grid background */}
+      <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none">
+        <div
+          className="w-full h-full"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+      </div>
 
       {/* Hero Section */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-8 lg:px-12 pt-36 lg:justify-start">
