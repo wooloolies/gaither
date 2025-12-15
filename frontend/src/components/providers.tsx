@@ -6,7 +6,7 @@ import { QueryProvider } from '@/components/providers/query-provider'
 import { Toaster } from 'sonner'
 import dynamic from 'next/dynamic'
 
-const TanStackDevtoolsWrapper = process.env.NODE_ENV !== 'production'
+const TanStackDevtoolsWrapper = process.env.NODE_ENV !== 'production' && process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS === 'true'
   ? dynamic(
     () => import('@/components/providers/tanstack-devtools').then(
       (mod) => mod.TanStackDevtoolsWrapper
@@ -26,7 +26,7 @@ export function Providers({ children }: Readonly<{ children: React.ReactNode }>)
       >
         {children}
         <Toaster position="bottom-right" richColors />
-        {process.env.NODE_ENV !== 'production' && TanStackDevtoolsWrapper && <TanStackDevtoolsWrapper />}
+        {TanStackDevtoolsWrapper && <TanStackDevtoolsWrapper />}
       </ThemeProvider>
     </QueryProvider>
   )
