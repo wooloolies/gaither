@@ -36,7 +36,7 @@ export function NumberField({
         value={field.state.value ?? ''}
         onChange={(e) => {
           const value = e.target.value
-          field.handleChange(value === '' ? undefined : Number(value))
+          field.handleChange((value === '' ? 0 : Number(value)) as number)
         }}
         onBlur={field.handleBlur}
         min={min !== undefined ? String(min) : undefined}

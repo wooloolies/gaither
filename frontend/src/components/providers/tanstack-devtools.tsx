@@ -8,6 +8,9 @@ import * as React from 'react'
 export function TanStackDevtoolsWrapper() {
   return (
     <TanStackDevtools
+      config={{
+        openHotkey: [],
+      }}
       plugins={[
         {
           name: 'TanStack Query',
