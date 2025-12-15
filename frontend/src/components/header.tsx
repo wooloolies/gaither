@@ -22,12 +22,12 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-8 lg:px-12 py-6 transition-colors duration-500 bg-white/80 dark:bg-[#3c3c3c]/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-8 lg:px-12 py-6 transition-colors duration-500 bg-white/95 dark:bg-[#3c3c3c]/95 backdrop-blur-md border-b border-black/10 dark:border-white/20 shadow-[0px_2px_0px_0px_rgba(0,0,0,0.25)] dark:shadow-[0px_2px_0px_0px_rgba(255,255,255,0.15)]">
       {/* Logo or Back Button */}
       {showBackButton ? (
         <BackButton href="/" />
       ) : (
-        <div className="flex items-end gap-8">
+        <div className="flex items-center gap-6">
           <Link href="/">
             <h1 className="font-pixelify text-3xl md:text-4xl tracking-tight transition-colors duration-500 text-black dark:text-white hover:opacity-80 cursor-pointer">
               Gaither
@@ -45,7 +45,7 @@ export default function Header() {
       )}
 
       {/* Right side navigation */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         {!isPending && (
           <>
             {isAuthenticated ? (

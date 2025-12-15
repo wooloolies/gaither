@@ -1,8 +1,9 @@
 'use client'
 
-import SwitchIcon from '@/assets/switch.svg'
+import SwitchIcon from '@/assets/theme-toggle.svg'
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
+import { framedButtonBase } from './button-styles'
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -14,15 +15,15 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="w-10 h-10 md:w-12 md:h-11 flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer"
+      className={`${framedButtonBase} w-10 h-10 p-1.5`}
       aria-label="Toggle theme"
     >
       <Image
         src={SwitchIcon}
         alt="Toggle theme"
-        width={48}
-        height={44}
-        className="w-full h-full transition-all duration-300 dark:invert"
+        width={40}
+        height={40}
+        className="w-full h-full transition-colors duration-500 dark:invert"
       />
     </button>
   )

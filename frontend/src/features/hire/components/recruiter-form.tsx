@@ -69,8 +69,8 @@ export function RecruiterForm() {
   }, [isLinkedIn, session?.user, form])
 
   return (
-    <div className="bg-panel border border-border p-8 rounded-2xl shadow-xl">
-      <h1 className="text-3xl font-bold mb-6 text-foreground">Recruiter Fill-out Form</h1>
+    <div className="bg-white dark:bg-[#3c3c3c] border-2 border-black dark:border-white p-8 md:p-10 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-colors duration-500">
+      <h1 className="font-pixelify text-3xl md:text-4xl mb-8 text-black dark:text-white">Recruiter Fill-out Form</h1>
 
       <form
         onSubmit={(e) => {

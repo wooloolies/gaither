@@ -76,9 +76,9 @@ export default function HireJobPage({ params }: HireJobPageProps) {
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-[#3c3c3c] transition-colors duration-500 p-6 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">Loading job...</p>
+          <p className="font-stzhongsong text-xl text-black dark:text-white">Loading job...</p>
         </div>
       </div>
     )
@@ -87,15 +87,15 @@ export default function HireJobPage({ params }: HireJobPageProps) {
   // Handle error state (404, unauthorized, etc.)
   if (isError || !job) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-destructive mb-4">Job Not Found</h1>
-          <p className="text-muted-foreground mb-4">
+      <div className="min-h-screen bg-white dark:bg-[#3c3c3c] transition-colors duration-500 p-6 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h1 className="font-pixelify text-3xl md:text-4xl text-black dark:text-white mb-6">Job Not Found</h1>
+          <p className="font-stzhongsong text-lg text-black/70 dark:text-white/70 mb-8">
             {error ? 'Unable to load job. Please check if you have access.' : 'Job not found or you do not have access to this job.'}
           </p>
           <button
             onClick={() => router.push('/hire')}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="font-stzhongsong text-xl px-8 py-4 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black cursor-pointer"
           >
             Back to Create Job
           </button>
@@ -107,9 +107,9 @@ export default function HireJobPage({ params }: HireJobPageProps) {
   // Show loading state while starting job
   if (startJobMutation.isPending) {
     return (
-      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-[#3c3c3c] transition-colors duration-500 p-6 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">Starting job...</p>
+          <p className="font-stzhongsong text-xl text-black dark:text-white">Starting job...</p>
         </div>
       </div>
     )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { framedButtonBase } from './button-styles'
 
 interface BackButtonProps {
   onClick?: () => void
@@ -30,9 +31,9 @@ export default function BackButton({
   return (
     <button
       onClick={handleClick}
-      className={`h-10 bg-black shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] px-4 cursor-pointer hover:bg-gray-900 transition-colors ${className}`}
+      className={`${framedButtonBase} h-10 px-4 ${className}`}
     >
-      <span className="font-pixelify text-xl md:text-2xl text-white">
+      <span className="font-pixelify text-xl md:text-2xl text-black dark:text-white transition-colors duration-500">
         {children}
       </span>
     </button>

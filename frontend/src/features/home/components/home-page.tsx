@@ -30,10 +30,10 @@ export default function HomePage() {
       </div>
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-8 lg:px-12 pt-36 lg:justify-start">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] px-8 lg:px-12 pt-20 lg:pt-24">
         <div className="max-w-4xl mx-auto text-center md:text-left">
           {/* Main headline */}
-          <div className="font-pixelify mb-8 transition-colors duration-500 text-black dark:text-white">
+          <div className="font-pixelify mb-6 md:mb-8 transition-colors duration-500 text-black dark:text-white">
             <p className="text-2xl md:text-3xl lg:text-4xl leading-relaxed">
               No{' '}
               <span className="text-7xl md:text-8xl lg:text-[128px] font-normal leading-none">
@@ -42,9 +42,9 @@ export default function HomePage() {
               Resumes.
             </p>
           </div>
-          
+
           {/* Subheadline with Document Swirl */}
-          <div className="flex items-center gap-10 mt-8">
+          <div className="flex items-center gap-10 mt-6 md:mt-8">
             <p className="font-serif font-bold text-3xl md:text-4xl lg:text-[40px] transition-colors duration-500 text-black dark:text-white">
               Just Real work.
             </p>
@@ -53,7 +53,7 @@ export default function HomePage() {
         </div>
 
         {/* CTA Buttons */}
-        <div className="mt-20 md:mt-28 flex flex-col sm:flex-row gap-4">
+        <div className="mt-12 md:mt-16 flex flex-col sm:flex-row gap-4">
           <Button
             onClick={handleHireNow}
             className="font-stzhongsong text-2xl md:text-3xl px-16 md:px-20 py-8 md:py-10 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 bg-[#222] hover:bg-[#333] text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black cursor-pointer"

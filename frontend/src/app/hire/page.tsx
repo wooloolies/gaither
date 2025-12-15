@@ -4,7 +4,8 @@ import { RecruiterForm } from '@/features/hire/components/recruiter-form'
 
 export default function HirePage() {
   return (
-    <div className="relative min-h-screen bg-background p-6">
+    <div className="relative min-h-screen bg-white dark:bg-[#3c3c3c] transition-colors duration-500 p-6 md:p-10">
+
       {/* Subtle pixel grid background */}
       <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none">
         <div
