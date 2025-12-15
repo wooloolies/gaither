@@ -3,33 +3,7 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import type { AgentStates, WebSocketEvent } from '@/store/agent-store'
-
-const AGENT_CONFIG = {
-  hunter: {
-    name: 'HUNTER',
-    icon: '🎯',
-    color: 'text-emerald-500',
-    dotBg: 'bg-emerald-500',
-    badgeBg: 'bg-emerald-500/10',
-    badgeBorder: 'border-emerald-500/20',
-  },
-  analyzer: {
-    name: 'ANALYZER',
-    icon: '🧠',
-    color: 'text-accent-blue',
-    dotBg: 'bg-accent-blue',
-    badgeBg: 'bg-accent-blue/10',
-    badgeBorder: 'border-accent-blue/20',
-  },
-  engager: {
-    name: 'ENGAGER',
-    icon: '💬',
-    color: 'text-accent-purple',
-    dotBg: 'bg-accent-purple',
-    badgeBg: 'bg-accent-purple/10',
-    badgeBorder: 'border-accent-purple/20',
-  },
-} as const
+import AgentSwarm from './agent-swarm'
 
 interface AgentStatusProps {
   agentStates: AgentStates
@@ -48,35 +22,9 @@ export default function AgentStatus({ agentStates, events }: AgentStatusProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Agent Status Rows */}
-      <div className="p-6 border-b border-border space-y-3">
-        <h3 className="text-lg font-bold text-foreground mb-4">Agents</h3>
-
-        {Object.entries(AGENT_CONFIG).map(([key, config]) => {
-          const state = agentStates[key as keyof AgentStates]
-          const isActive = state === 'active'
-
-          return (
-            <div key={key} className="flex items-center justify-between group p-3 rounded-xl hover:bg-surface/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className={`w-2.5 h-2.5 rounded-full ${isActive ? `animate-pulse ${config.dotBg}` : 'bg-border'}`} />
-                <span className={`text-sm font-medium ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {config.name}
-                </span>
-              </div>
-              {isActive && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`text-xs ${config.color} ${config.badgeBg} px-2.5 py-1 rounded-lg border ${config.badgeBorder} font-medium`}
-                >
-                  Active
-                </motion.span>
-              )}
-              {state === 'completed' && <span className="text-xs text-emerald-600 dark:text-emerald-500 font-medium">Done</span>}
-            </div>
-          )
-        })}
+      {/* Agent Swarm Visualization */}
+      <div className="p-4 border-b border-border">
+        <AgentSwarm agentStates={agentStates} events={events} />
       </div>
 
       {/* Activity Log */}
