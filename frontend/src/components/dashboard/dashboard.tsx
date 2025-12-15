@@ -7,7 +7,7 @@ import { useAgentWebSocket } from '@/hooks/use-websocket'
 import { jobsApi, type JobRequest, type JobResponse } from '@/lib/api-client'
 import JobForm from '@/components/dashboard/job-form'
 import AgentStatus from '@/components/dashboard/agent-status'
-import CandidateCard from '@/components/dashboard/candidate-card'
+import CandidateGrid from '@/components/candidate-grid'
 import MetricsPanel from '@/components/dashboard/metrics-panel'
 
 interface DashboardProps {
@@ -181,15 +181,8 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
               <h2 className="font-semibold text-white">Candidate Candidates</h2>
               <span className="text-xs text-muted-foreground font-mono">{candidates.length} FOUND</span>
             </div>
-            <div className="p-4 overflow-y-auto flex-1 space-y-4">
-              {candidates.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                  <div className="text-4xl mb-4">🔭</div>
-                  <p>Waiting for candidates...</p>
-                </div>
-              ) : (
-                candidates.map((candidate, i) => <CandidateCard key={candidate.id} candidate={candidate} index={i} />)
-              )}
+            <div className="p-4 overflow-y-auto flex-1">
+              <CandidateGrid candidates={candidates} />
             </div>
             {candidates.length > 0 && (
               <div className="p-4 border-t border-border bg-surface/30">

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useGetJobApiJobsJobIdGet, useStartJobApiJobsJobIdStartPost } from '@/lib/api/jobs/jobs'
 import { useListCandidatesApiCandidatesGet } from '@/lib/api/candidates/candidates'
 import { useAgentStore } from '@/store/agent-store'
+import { JobStatus } from '@/lib/api/model'
 import Dashboard from '@/components/dashboard'
 
 interface HireJobPageProps {
@@ -61,7 +62,14 @@ export default function HireJobPage({ params }: HireJobPageProps) {
   useEffect(() => {
     if (job && !startJobMutation.isPending && !startJobMutation.isSuccess && !isJobStarted) {
       setSelectedModel(job.model_provider || 'gemini')
-      startJobMutation.mutate({ jobId: job.id })
+
+      // Only start the job if it's not already running
+      if (job.status !== JobStatus.running && job.status !== JobStatus.completed) {
+        startJobMutation.mutate({ jobId: job.id })
+      } else {
+        // If job is already running or completed, mark as started
+        setIsJobStarted(true)
+      }
     }
   }, [job, setSelectedModel, startJobMutation.isPending, startJobMutation.isSuccess, startJobMutation.mutate, isJobStarted])
 

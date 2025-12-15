@@ -20,10 +20,6 @@ export default function CandidateGrid({ candidates }: CandidateGridProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white">Candidates Found: {candidates.length}</h2>
-      </div>
-
       <div className="space-y-4">
         {candidates.map((candidate, index) => (
           <CandidateCard key={candidate.id} candidate={candidate} index={index} />
@@ -32,6 +28,3 @@ export default function CandidateGrid({ candidates }: CandidateGridProps) {
     </div>
   )
 }
-
-
-
