@@ -1,7 +1,11 @@
+'use client'
+
 import CandidateGraph from "@/features/neo4j/components/candidate-graph";
+import { useState } from "react";
 
 export default function Neo4jQueryPage() {
-    const username = "alwyndsouza"
+    const [username, setUsername] = useState("w1kke");
+
     return (
         <div className="relative" style={{ padding: '2rem' }}>
             {/* Subtle pixel grid background */}
@@ -21,7 +25,10 @@ export default function Neo4jQueryPage() {
 
                 <section style={{ marginBottom: '2rem' }}>
                     <h2>Candidate Graph: {username}</h2>
-                    <CandidateGraph username={username} />
+                    <CandidateGraph
+                        username={username}
+                        onUsernameChange={setUsername}
+                    />
                 </section>
             </div>
         </div>
