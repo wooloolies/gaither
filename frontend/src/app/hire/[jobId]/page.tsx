@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { useGetJobApiJobsJobIdGet, useStartJobApiJobsJobIdStartPost } from '@/lib/api/jobs/jobs'
 import { useListCandidatesApiCandidatesGet } from '@/lib/api/candidates/candidates'
 import { useAgentStore } from '@/store/agent-store'
@@ -51,7 +52,7 @@ export default function HireJobPage({ params }: HireJobPageProps) {
       },
       onError: (error) => {
         console.error('Error starting job:', error)
-        alert('Error starting job. Please try again.')
+        toast.error('Error starting job. Please try again.')
       },
     },
   })

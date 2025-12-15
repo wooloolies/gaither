@@ -3,14 +3,17 @@
 import * as React from 'react'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { Toaster } from 'sonner'
 import dynamic from 'next/dynamic'
 
-const TanStackDevtoolsWrapper = dynamic(
-  () => import('@/components/providers/tanstack-devtools').then(
-    (mod) => mod.TanStackDevtoolsWrapper
-  ),
-  { ssr: false }
-)
+const TanStackDevtoolsWrapper = process.env.NODE_ENV !== 'production'
+  ? dynamic(
+    () => import('@/components/providers/tanstack-devtools').then(
+      (mod) => mod.TanStackDevtoolsWrapper
+    ),
+    { ssr: false }
+  )
+  : null
 
 export function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -22,7 +25,8 @@ export function Providers({ children }: Readonly<{ children: React.ReactNode }>)
         disableTransitionOnChange
       >
         {children}
-        <TanStackDevtoolsWrapper />
+        <Toaster position="bottom-right" richColors />
+        {process.env.NODE_ENV !== 'production' && TanStackDevtoolsWrapper && <TanStackDevtoolsWrapper />}
       </ThemeProvider>
     </QueryProvider>
   )
