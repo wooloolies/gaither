@@ -1,23 +1,46 @@
 """
 Hunter Agent - Finds candidates matching job descriptions.
+Features: Parallel search strategies, caching, progress events, rate limit handling.
 """
 import asyncio
 import logging
 import random
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Set
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from agents.base import BaseAgent
 from services.llm import get_llm_service
-from services.github_service import github_service
+from services.github_service import github_service, RateLimitError
 from config import settings
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class SearchStrategy:
+    """Represents a single search strategy with its results"""
+    name: str
+    description: str
+    query: str
+    page: int = 1
+    per_page: int = 10
+
+
+@dataclass
+class SearchResult:
+    """Result from a single search strategy"""
+    strategy_name: str
+    candidates: List[Dict[str, Any]]
+    success: bool
+    error: str = None
+
+
 class HunterAgent(BaseAgent):
-    """Agent responsible for finding candidate profiles"""
+    """Agent responsible for finding candidate profiles with parallel search strategies"""
 
     def __init__(self):
         super().__init__("hunter")
+        self._processed_usernames: Set[str] = set()
 
     async def execute(
         self,
@@ -27,7 +50,7 @@ class HunterAgent(BaseAgent):
         existing_usernames: set = None
     ):
         """
-        Find candidates matching the job description.
+        Find candidates matching the job description using parallel search strategies.
 
         Args:
             job_id: The job ID
@@ -40,19 +63,48 @@ class HunterAgent(BaseAgent):
                 "search_started",
                 {"job_title": job_data.get("title", "Unknown")},
                 job_id,
-                message=f"🔍 Searching GitHub for {job_data.get('title', 'candidates')}..."
+                message=f"🔍 Starting parallel search for {job_data.get('title', 'candidates')}..."
             )
 
-            # Store location for use in search
+            # Initialize tracking
+            self._processed_usernames = set(existing_usernames) if existing_usernames else set()
             self._current_job_location = job_data.get("location")
+            
+            # Log rate limit status before starting
+            rate_status = github_service.get_rate_limit_status()
+            logger.info(f"Rate limit status - Core: {rate_status['core']['remaining']}, Search: {rate_status['search']['remaining']}")
 
             # Step 1: Extract keywords from job description
+            await self.emit_event(
+                "strategy_progress",
+                {"phase": "keyword_extraction", "progress": "1/3"},
+                job_id,
+                message="📝 Analyzing job requirements..."
+            )
+            
             keywords = await self._extract_keywords(job_data)
 
-            # Step 2: Search GitHub for candidates (multi-strategy)
-            candidates = await self._search_github(keywords, existing_usernames or set())
+            # Step 2: Build search strategies
+            await self.emit_event(
+                "strategy_progress",
+                {"phase": "building_strategies", "progress": "2/3"},
+                job_id,
+                message="🎯 Building search strategies..."
+            )
+            
+            strategies = self._build_search_strategies(keywords, len(self._processed_usernames))
 
-            # Step 3: Send candidates to analyzer queue
+            # Step 3: Execute strategies in parallel
+            await self.emit_event(
+                "strategy_progress",
+                {"phase": "parallel_search", "progress": "3/3", "strategy_count": len(strategies)},
+                job_id,
+                message=f"⚡ Running {len(strategies)} search strategies in parallel..."
+            )
+            
+            candidates = await self._execute_parallel_searches(strategies, job_id)
+
+            # Step 4: Send candidates to analyzer queue
             for candidate in candidates:
                 await output_queue.put(candidate)
                 await self.emit_event(
@@ -60,27 +112,39 @@ class HunterAgent(BaseAgent):
                     {
                         "username": candidate["username"],
                         "url": candidate["profile_url"],
-                        "avatar_url": candidate.get("avatar_url")
+                        "avatar_url": candidate.get("avatar_url"),
+                        "quality_score": candidate.get("quality_score", 0)
                     },
                     job_id,
-                    message=f"✅ Found candidate: @{candidate['username']}"
+                    message=f"✅ Found candidate: @{candidate['username']} (quality: {candidate.get('quality_score', 0)}/10)"
                 )
-
-                # Small delay to make demo more visible
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.3)
 
             await self.emit_event(
                 "search_completed",
-                {"total_found": len(candidates)},
+                {
+                    "total_found": len(candidates),
+                    "strategies_used": len(strategies),
+                    "excluded_existing": len(existing_usernames) if existing_usernames else 0
+                },
                 job_id,
                 message=f"🎯 Search complete: Found {len(candidates)} qualified candidates"
             )
 
             # Signal end of candidates
             await output_queue.put(None)
-
             logger.info(f"Hunter completed: found {len(candidates)} candidates")
 
+        except RateLimitError as e:
+            logger.error(f"Rate limit exceeded: {e}")
+            await self.emit_event(
+                "rate_limit_error",
+                {"reset_time": e.reset_time, "message": str(e)},
+                job_id,
+                message="⚠️ GitHub rate limit reached. Try again later."
+            )
+            await output_queue.put(None)
+            raise
         except Exception as e:
             logger.error(f"Hunter agent error: {e}")
             await output_queue.put(None)
@@ -88,25 +152,20 @@ class HunterAgent(BaseAgent):
 
     async def _extract_keywords(self, job_data: Dict[str, Any]) -> Dict[str, List[str]]:
         """
-        Extract comprehensive search keywords from job description using LLM with semantic understanding.
-
-        Args:
-            job_data: Job description and requirements
-
-        Returns:
-            Dictionary with programming_languages, frameworks, domains, related_technologies, and search_terms
+        Extract comprehensive search keywords from job description using LLM.
+        Includes improved fallback logic.
         """
         location = job_data.get('location', '')
         key_responsibilities = job_data.get('key_responsibilities') or job_data.get('description', '')
+        requirements = job_data.get('requirements', [])
 
-        prompt = f"""
-Analyze this job description and extract comprehensive search keywords to find the BEST matching candidates on GitHub.
+        prompt = f"""Analyze this job description and extract comprehensive search keywords to find the BEST matching candidates on GitHub.
 
 Title: {job_data.get('title', '')}
 Company: {job_data.get('company_name', '')}
 Location: {location}
 Description: {key_responsibilities}
-Requirements: {', '.join(job_data.get('requirements', []))}
+Requirements: {', '.join(requirements)}
 Core Skill Requirement: {job_data.get('core_skill_requirement', '')}
 Familiar With: {job_data.get('familiar_with', '')}
 Language Requirement: {job_data.get('language_requirement', '')}
@@ -187,460 +246,502 @@ Be specific and prioritize searchable, verifiable terms over generic description
         }
 
         try:
-            # Get LLM service based on job's model provider
             llm_service = get_llm_service(job_data.get("model_provider"))
-
             keywords = await llm_service.function_call(
                 prompt=prompt,
                 function_name="extract_comprehensive_keywords",
                 schema=schema
             )
-            logger.info(f"Extracted comprehensive keywords: {keywords}")
+            logger.info(f"Extracted keywords: {keywords}")
             return keywords
         except Exception as e:
             logger.error(f"Error extracting keywords: {e}")
-            # Fallback to basic extraction
-            return {
-                "core_languages": ["Python"],
-                "primary_frameworks": [],
-                "related_technologies": [],
-                "repository_topics": [],
-                "domain_keywords": []
-            }
+            # Improved fallback: extract from requirements
+            return self._fallback_keyword_extraction(job_data)
 
-    async def _search_github(self, keywords: Dict[str, List[str]], existing_usernames: set = None) -> List[Dict[str, Any]]:
+    def _fallback_keyword_extraction(self, job_data: Dict[str, Any]) -> Dict[str, List[str]]:
         """
-        Advanced multi-strategy GitHub search to find highly relevant, active candidates.
-
-        Strategies:
-        1. Repository topic + recent activity search
-        2. Primary framework + language combination search
-        3. Domain expertise search (bio + repos + activity)
-        4. Related technology stack search
-        5. Alternative terms search
-
-        Args:
-            keywords: Comprehensive extracted keywords from job description
-            existing_usernames: Set of usernames to exclude (already found for this job)
-
-        Returns:
-            List of high-quality candidate profile data (actual hireable individuals)
+        Fallback keyword extraction when LLM fails.
+        Extracts keywords directly from job requirements and description.
         """
-        candidates = []
-        # Initialize with existing usernames to avoid re-finding the same candidates
-        seen_usernames = set(existing_usernames) if existing_usernames else set()
+        requirements = job_data.get('requirements', [])
+        core_skill = job_data.get('core_skill_requirement', '')
+        familiar_with = job_data.get('familiar_with', '')
+        title = job_data.get('title', '').lower()
 
-        if seen_usernames:
-            logger.info(f"Excluding {len(seen_usernames)} existing candidates from search")
+        # Common programming languages
+        languages = ['python', 'javascript', 'typescript', 'java', 'go', 'rust', 'c++', 'ruby', 'php', 'swift', 'kotlin']
+        # Common frameworks
+        frameworks = ['react', 'vue', 'angular', 'django', 'fastapi', 'flask', 'spring', 'express', 'nextjs', 'pytorch', 'tensorflow']
 
-        # Calculate which page to fetch based on number of existing candidates
-        # This helps get different results on subsequent runs
-        search_page = max(1, (len(seen_usernames) // 10) + 1)
-        logger.info(f"Using search page {search_page} to diversify results")
+        all_text = ' '.join([
+            ' '.join(requirements),
+            core_skill,
+            familiar_with,
+            title,
+            job_data.get('description', '')
+        ]).lower()
 
+        detected_languages = [lang for lang in languages if lang in all_text]
+        detected_frameworks = [fw for fw in frameworks if fw in all_text]
+
+        # Ensure we have at least something
+        if not detected_languages:
+            detected_languages = ['python']
+        if not detected_frameworks and 'machine learning' in all_text:
+            detected_frameworks = ['pytorch', 'tensorflow']
+        if not detected_frameworks and 'web' in all_text:
+            detected_frameworks = ['react', 'nodejs']
+
+        return {
+            "core_languages": detected_languages[:3],
+            "primary_frameworks": detected_frameworks[:4],
+            "related_technologies": [],
+            "repository_topics": [],
+            "domain_keywords": [title] if title else [],
+            "seniority_level": "mid-level",
+            "alternative_terms": []
+        }
+
+    def _build_search_strategies(
+        self,
+        keywords: Dict[str, List[str]],
+        existing_count: int
+    ) -> List[SearchStrategy]:
+        """
+        Build a list of search strategies based on extracted keywords.
+        """
+        strategies = []
+        search_page = max(1, (existing_count // 10) + 1)
+        
+        # Shuffle keywords for variety
+        core_languages = keywords.get("core_languages", []).copy()
+        primary_frameworks = keywords.get("primary_frameworks", []).copy()
+        related_tech = keywords.get("related_technologies", []).copy()
+        repo_topics = keywords.get("repository_topics", []).copy()
+        domain_keywords = keywords.get("domain_keywords", []).copy()
+        alt_terms = keywords.get("alternative_terms", []).copy()
+        
+        random.shuffle(core_languages)
+        random.shuffle(primary_frameworks)
+        random.shuffle(related_tech)
+        random.shuffle(repo_topics)
+        random.shuffle(domain_keywords)
+        random.shuffle(alt_terms)
+
+        one_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+        location = getattr(self, '_current_job_location', None)
+        location_query = self._format_location(location) if location else ""
+
+        # Strategy 1: Repository Topics
+        for topic in repo_topics[:2]:
+            query = f"{topic.replace(' ', '-')} in:bio type:user repos:>3 created:<{one_year_ago} followers:>5"
+            if location_query:
+                query += f" {location_query}"
+            strategies.append(SearchStrategy(
+                name=f"topic_{topic}",
+                description=f"Search by topic: {topic}",
+                query=query,
+                page=search_page,
+                per_page=12
+            ))
+
+        # Strategy 2: Framework + Language
+        for framework in primary_frameworks[:2]:
+            for language in core_languages[:1]:
+                query = f"{framework} in:bio language:{language} type:user repos:>5 followers:>3"
+                if location_query:
+                    query += f" {location_query}"
+                strategies.append(SearchStrategy(
+                    name=f"framework_{framework}_{language}",
+                    description=f"Search {framework} + {language} experts",
+                    query=query,
+                    page=search_page,
+                    per_page=10
+                ))
+
+        # Strategy 3: Domain Expertise
+        for domain_kw in domain_keywords[:2]:
+            search_term = f'"{domain_kw}"' if ' ' in domain_kw else domain_kw
+            query = f"{search_term} in:bio type:user repos:>5 created:<{one_year_ago}"
+            if core_languages:
+                query += f" language:{core_languages[0]}"
+            if location_query:
+                query += f" {location_query}"
+            strategies.append(SearchStrategy(
+                name=f"domain_{domain_kw}",
+                description=f"Search domain: {domain_kw}",
+                query=query,
+                page=search_page,
+                per_page=10
+            ))
+
+        # Strategy 4: Tech Stack Combination
+        if len(related_tech) >= 2:
+            tech_combo = f"{related_tech[0]} {related_tech[1]}"
+            query = f"{tech_combo} in:bio type:user repos:>7"
+            if location_query:
+                query += f" {location_query}"
+            strategies.append(SearchStrategy(
+                name=f"tech_stack_{related_tech[0]}_{related_tech[1]}",
+                description=f"Search tech stack: {tech_combo}",
+                query=query,
+                page=search_page,
+                per_page=10
+            ))
+
+        # Strategy 5: Alternative Terms
+        for alt_term in alt_terms[:2]:
+            query = f"{alt_term} in:bio type:user repos:>5"
+            if core_languages:
+                query += f" language:{core_languages[0]}"
+            if location_query:
+                query += f" {location_query}"
+            strategies.append(SearchStrategy(
+                name=f"alt_term_{alt_term}",
+                description=f"Search alternative term: {alt_term}",
+                query=query,
+                page=search_page,
+                per_page=8
+            ))
+
+        # Strategy 6: Repository-based search (find contributors to popular repos)
+        if primary_frameworks:
+            for framework in primary_frameworks[:1]:
+                strategies.append(SearchStrategy(
+                    name=f"repo_contributors_{framework}",
+                    description=f"Find contributors to {framework} repos",
+                    query=f"{framework} stars:>100 pushed:>{one_year_ago}",
+                    page=1,
+                    per_page=5
+                ))
+
+        logger.info(f"Built {len(strategies)} search strategies")
+        return strategies
+
+    def _format_location(self, location: str) -> str:
+        """Format location for GitHub search query"""
+        if not location:
+            return ""
+        location = location.strip()
+        if any(ch.isspace() for ch in location):
+            return f'location:"{location}"'
+        return f"location:{location}"
+
+    async def _execute_parallel_searches(
+        self,
+        strategies: List[SearchStrategy],
+        job_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute search strategies in parallel with controlled concurrency.
+        """
+        all_candidates = []
+        
+        # Group strategies into batches to avoid overwhelming the API
+        batch_size = 3
+        strategy_batches = [
+            strategies[i:i + batch_size] 
+            for i in range(0, len(strategies), batch_size)
+        ]
+
+        total_strategies = len(strategies)
+        completed_strategies = 0
+
+        for batch_idx, batch in enumerate(strategy_batches):
+            # Execute batch in parallel
+            tasks = []
+            for strategy in batch:
+                if strategy.name.startswith("repo_contributors_"):
+                    tasks.append(self._execute_repo_contributor_search(strategy))
+                else:
+                    tasks.append(self._execute_user_search(strategy))
+
+            # Wait for batch to complete
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Process results
+            for i, result in enumerate(results):
+                strategy = batch[i]
+                completed_strategies += 1
+                
+                if isinstance(result, Exception):
+                    logger.error(f"Strategy {strategy.name} failed: {result}")
+                    await self.emit_event(
+                        "strategy_failed",
+                        {"strategy": strategy.name, "error": str(result)},
+                        job_id,
+                        message=f"⚠️ Strategy '{strategy.description}' encountered an error"
+                    )
+                elif isinstance(result, SearchResult):
+                    if result.success:
+                        all_candidates.extend(result.candidates)
+                        await self.emit_event(
+                            "strategy_completed",
+                            {
+                                "strategy": strategy.name,
+                                "found": len(result.candidates),
+                                "progress": f"{completed_strategies}/{total_strategies}"
+                            },
+                            job_id,
+                            message=f"✓ {strategy.description}: found {len(result.candidates)} candidates ({completed_strategies}/{total_strategies})"
+                        )
+                    else:
+                        logger.warning(f"Strategy {strategy.name} failed: {result.error}")
+
+            # Check if we have enough candidates
+            if len(all_candidates) >= settings.MAX_CANDIDATES_PER_JOB:
+                logger.info(f"Reached max candidates ({settings.MAX_CANDIDATES_PER_JOB}), stopping search")
+                break
+
+            # Small delay between batches to be nice to the API
+            if batch_idx < len(strategy_batches) - 1:
+                await asyncio.sleep(0.5)
+
+        # Deduplicate and sort by quality score
+        unique_candidates = self._deduplicate_candidates(all_candidates)
+        unique_candidates.sort(key=lambda x: x.get("quality_score", 0), reverse=True)
+        
+        return unique_candidates[:settings.MAX_CANDIDATES_PER_JOB]
+
+    async def _execute_user_search(self, strategy: SearchStrategy) -> SearchResult:
+        """Execute a user search strategy"""
         try:
-            # Extract keyword categories
-            core_languages = keywords.get("core_languages", [])
-            primary_frameworks = keywords.get("primary_frameworks", [])
-            related_tech = keywords.get("related_technologies", [])
-            repo_topics = keywords.get("repository_topics", [])
-            domain_keywords = keywords.get("domain_keywords", [])
-            alt_terms = keywords.get("alternative_terms", [])
-
-            # Shuffle keyword lists to randomize search order
-            # This ensures different searches try different combinations
-            random.shuffle(core_languages)
-            random.shuffle(primary_frameworks)
-            random.shuffle(related_tech)
-            random.shuffle(repo_topics)
-            random.shuffle(domain_keywords)
-            random.shuffle(alt_terms)
-
-            logger.info("Randomized keyword order for diverse search results")
-
-            # Get date threshold for account age filtering
-            from datetime import datetime, timedelta
-            one_year_ago = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
-
-            # Extract location from job_data (passed through in execute)
-            job_location = getattr(self, '_current_job_location', None)
-            if isinstance(job_location, str):
-                job_location = job_location.strip() or None
-
-            def _fmt_location(loc: str) -> str:
-                if any(ch.isspace() for ch in loc):
-                    return f'location:"{loc}"'
-                return f"location:{loc}"
-
-            logger.info(f"🎯 Starting advanced GitHub search with {len(primary_frameworks)} primary frameworks, "
-                       f"{len(core_languages)} languages, {len(repo_topics)} topics")
-
-            # ==================================================================
-            # STRATEGY 1: Repository Topics + Recent Activity
-            # Find developers with repos tagged with relevant topics who are ACTIVE
-            # ==================================================================
-            if repo_topics and len(candidates) < settings.MAX_CANDIDATES_PER_JOB:
-                for topic in repo_topics[:3]:  # Top 3 most relevant topics
-                    query_parts = [
-                        f"{topic.replace(' ', '-')} in:bio",  # Topics often appear in bio
-                        "type:user",
-                        "repos:>3",
-                        f"created:<{one_year_ago}",  # Account at least 1 year old
-                        "followers:>5"  # Minimum to filter spam/bot accounts only
-                    ]
-
-                    if job_location:
-                        query_parts.append(_fmt_location(job_location))
-
-                    query = " ".join(query_parts)
-                    logger.info(f"🔍 Strategy 1 (Topic + Activity): {query} [page {search_page}]")
-
-                    users = await github_service.search_users(query, per_page=15, page=search_page)
-                    new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
-                    candidates.extend(new_candidates)
-
-                    logger.info(f"  → Found {len(new_candidates)} candidates from topic '{topic}'")
-
-                    if len(candidates) >= settings.MAX_CANDIDATES_PER_JOB:
-                        break
-
-                    await asyncio.sleep(0.4)
-
-            # ==================================================================
-            # STRATEGY 2: Primary Framework + Language Combination
-            # Find experts who use specific tech stack combinations
-            # ==================================================================
-            if primary_frameworks and core_languages and len(candidates) < settings.MAX_CANDIDATES_PER_JOB:
-                for framework in primary_frameworks[:2]:  # Top 2 must-have frameworks
-                    for language in core_languages[:2]:  # Top 2 languages
-                        query_parts = [
-                            f"{framework} in:bio",
-                            f"language:{language}",
-                            "type:user",
-                            "repos:>5",
-                            "followers:>3"  # Minimal filter for spam only
-                        ]
-
-                        if job_location:
-                            query_parts.append(_fmt_location(job_location))
-
-                        query = " ".join(query_parts)
-                        logger.info(f"🔍 Strategy 2 (Framework + Language): {query} [page {search_page}]")
-
-                        users = await github_service.search_users(query, per_page=10, page=search_page)
-                        new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
-                        candidates.extend(new_candidates)
-
-                        logger.info(f"  → Found {len(new_candidates)} candidates for {framework} + {language}")
-
-                        if len(candidates) >= settings.MAX_CANDIDATES_PER_JOB:
-                            break
-
-                        await asyncio.sleep(0.4)
-
-                    if len(candidates) >= settings.MAX_CANDIDATES_PER_JOB:
-                        break
-
-            # ==================================================================
-            # STRATEGY 3: Domain Expertise Search
-            # Find people who self-identify with domain keywords and have quality repos
-            # ==================================================================
-            if domain_keywords and len(candidates) < settings.MAX_CANDIDATES_PER_JOB:
-                for domain_kw in domain_keywords[:2]:  # Top 2 domain keywords
-                    # Use quotes for multi-word domains
-                    search_term = f'"{domain_kw}"' if ' ' in domain_kw else domain_kw
-
-                    query_parts = [
-                        f"{search_term} in:bio",
-                        "type:user",
-                        "repos:>5",
-                        f"created:<{one_year_ago}"
-                        # No follower constraint - let quality scoring handle it
-                    ]
-
-                    if core_languages:
-                        query_parts.append(f"language:{core_languages[0]}")
-
-                    if job_location:
-                        query_parts.append(_fmt_location(job_location))
-
-                    query = " ".join(query_parts)
-                    logger.info(f"🔍 Strategy 3 (Domain Expertise): {query} [page {search_page}]")
-
-                    users = await github_service.search_users(query, per_page=12, page=search_page)
-                    new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
-                    candidates.extend(new_candidates)
-
-                    logger.info(f"  → Found {len(new_candidates)} domain experts for '{domain_kw}'")
-
-                    if len(candidates) >= settings.MAX_CANDIDATES_PER_JOB:
-                        break
-
-                    await asyncio.sleep(0.4)
-
-            # ==================================================================
-            # STRATEGY 4: Technology Stack Search
-            # Combine multiple related technologies to find well-rounded developers
-            # ==================================================================
-            if len(related_tech) >= 2 and len(candidates) < settings.MAX_CANDIDATES_PER_JOB:
-                # Combine technologies that often go together
-                tech_combo = f"{related_tech[0]} {related_tech[1]}"
-
-                query_parts = [
-                    f"{tech_combo} in:bio",
-                    "type:user",
-                    "repos:>7"  # More repos = more experienced
-                    # No follower constraint - tech skills matter, not popularity
-                ]
-
-                if job_location:
-                    query_parts.append(_fmt_location(job_location))
-
-                query = " ".join(query_parts)
-                logger.info(f"🔍 Strategy 4 (Tech Stack): {query} [page {search_page}]")
-
-                users = await github_service.search_users(query, per_page=10, page=search_page)
-                new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
-                candidates.extend(new_candidates)
-
-                logger.info(f"  → Found {len(new_candidates)} candidates with tech stack combination")
-
-                await asyncio.sleep(0.4)
-
-            # ==================================================================
-            # STRATEGY 5: Alternative Terms Search
-            # Use alternative names/abbreviations for technologies
-            # ==================================================================
-            if alt_terms and len(candidates) < settings.MAX_CANDIDATES_PER_JOB:
-                for alt_term in alt_terms[:2]:
-                    query_parts = [
-                        f"{alt_term} in:bio",
-                        "type:user",
-                        "repos:>5"
-                        # No follower constraint - alternative terms might be used by niche experts
-                    ]
-
-                    if core_languages:
-                        query_parts.append(f"language:{core_languages[0]}")
-
-                    if job_location:
-                        query_parts.append(_fmt_location(job_location))
-
-                    query = " ".join(query_parts)
-                    logger.info(f"🔍 Strategy 5 (Alternative Terms): {query} [page {search_page}]")
-
-                    users = await github_service.search_users(query, per_page=8, page=search_page)
-                    new_candidates = await self._process_github_users(users, seen_usernames, check_recent_activity=True)
-                    candidates.extend(new_candidates)
-
-                    logger.info(f"  → Found {len(new_candidates)} candidates using alternative term '{alt_term}'")
-
-                    if len(candidates) >= settings.MAX_CANDIDATES_PER_JOB:
-                        break
-
-                    await asyncio.sleep(0.4)
-
-            logger.info(f"✅ Advanced search complete: Found {len(candidates)} high-quality candidates")
-
+            users = await github_service.search_users(
+                strategy.query,
+                per_page=strategy.per_page,
+                page=strategy.page
+            )
+            
+            candidates = await self._process_github_users(users, check_recent_activity=True)
+            
+            return SearchResult(
+                strategy_name=strategy.name,
+                candidates=candidates,
+                success=True
+            )
+        except RateLimitError:
+            raise  # Re-raise rate limit errors
         except Exception as e:
-            logger.error(f"Error in advanced GitHub search: {e}")
+            return SearchResult(
+                strategy_name=strategy.name,
+                candidates=[],
+                success=False,
+                error=str(e)
+            )
 
-        # Return top candidates (sorted by quality if we have extras)
-        return candidates[:settings.MAX_CANDIDATES_PER_JOB]
+    async def _execute_repo_contributor_search(self, strategy: SearchStrategy) -> SearchResult:
+        """
+        Execute a repository-based contributor search.
+        Finds contributors to popular repositories as potential candidates.
+        """
+        try:
+            # Search for popular repositories
+            repos = await github_service.search_repositories(
+                strategy.query,
+                sort="stars",
+                per_page=strategy.per_page,
+                page=strategy.page
+            )
+            
+            candidates = []
+            
+            for repo in repos[:3]:  # Check top 3 repos
+                owner = repo.get("owner", {}).get("login")
+                repo_name = repo.get("name")
+                
+                if not owner or not repo_name:
+                    continue
+                
+                # Get contributors
+                contributors = await github_service.get_repo_contributors(
+                    owner, repo_name, per_page=5
+                )
+                
+                # Process each contributor as potential candidate
+                for contributor in contributors:
+                    username = contributor.get("login")
+                    
+                    if not username or username in self._processed_usernames:
+                        continue
+                    
+                    # Skip the repo owner (might be an org)
+                    if username == owner:
+                        continue
+                    
+                    # Get full user profile
+                    user_profile = await github_service.get_user(username)
+                    
+                    if not user_profile:
+                        continue
+                    
+                    # Skip organizations
+                    if user_profile.get("type") == "Organization":
+                        continue
+                    
+                    # Basic quality check
+                    quality_score = self._calculate_quality_score(user_profile)
+                    
+                    if quality_score >= 3:
+                        candidate = self._build_candidate_profile(user_profile, quality_score)
+                        candidates.append(candidate)
+                        self._processed_usernames.add(username)
+                        
+                        logger.info(f"Found contributor candidate: @{username} from {owner}/{repo_name}")
+                
+                await asyncio.sleep(0.3)  # Rate limit between repos
+            
+            return SearchResult(
+                strategy_name=strategy.name,
+                candidates=candidates,
+                success=True
+            )
+        except Exception as e:
+            return SearchResult(
+                strategy_name=strategy.name,
+                candidates=[],
+                success=False,
+                error=str(e)
+            )
 
     async def _process_github_users(
         self,
         users: List[Dict],
-        seen_usernames: set,
         check_recent_activity: bool = True
     ) -> List[Dict[str, Any]]:
         """
-        Process and filter GitHub users with advanced quality checks.
-
-        Filters out:
-        - Organizations (type != User)
-        - Duplicate users
-        - Inactive users (no recent contributions if check_recent_activity=True)
-        - Low-quality profiles (tutorial-only, bots, fake accounts)
-        - Users with suspicious activity patterns
-
-        Args:
-            users: List of GitHub user search results
-            seen_usernames: Set of already processed usernames
-            check_recent_activity: Whether to check for recent repository activity
-
-        Returns:
-            List of high-quality candidate profiles
+        Process and filter GitHub users with quality checks.
         """
         candidates = []
 
         for user in users:
             username = user["login"]
 
-            # Skip duplicates
-            if username in seen_usernames:
+            if username in self._processed_usernames:
                 continue
 
-            # Get full user profile
             user_profile = await github_service.get_user(username)
 
             if not user_profile:
                 continue
 
-            # CRITICAL FILTER: Skip organizations
+            # Skip organizations
             if user_profile.get("type") == "Organization":
-                logger.debug(f"Skipping organization: {username}")
                 continue
 
-            # Skip users with company name patterns (likely org accounts)
+            # Skip company accounts
             bio = (user_profile.get("bio") or "").lower()
             name = (user_profile.get("name") or "").lower()
             if any(org in bio or org in name for org in ["organization", "company", "official", "team"]):
-                logger.debug(f"Skipping company account: {username}")
                 continue
 
-            # Extract metrics
+            # Basic filters
             public_repos = user_profile.get("public_repos", 0)
             followers = user_profile.get("followers", 0)
             following = user_profile.get("following", 0)
-            created_at = user_profile.get("created_at", "")
 
-            # Filter out tutorial/education-only accounts
-            # These typically have many repos but low engagement
+            # Filter tutorial accounts
             if public_repos > 100 and followers < 50:
-                logger.debug(f"Skipping tutorial account: {username} (too many repos, low followers)")
                 continue
 
-            # Filter out inactive accounts (too few repos)
             if public_repos < 3:
-                logger.debug(f"Skipping low-activity account: {username} (< 3 repos)")
                 continue
 
-            # Filter out bot-like accounts (following way more than followers)
+            # Filter bot-like accounts
             if following > followers * 3 and followers > 10:
-                logger.debug(f"Skipping bot-like account: {username}")
                 continue
 
-            # Bio check: Allow empty bio if they have strong activity signals
-            # Some talented developers don't maintain GitHub bios
+            # Bio check
             has_bio = bio and len(bio.strip()) > 0
             has_strong_activity = public_repos >= 10 or followers >= 50
 
-            # Skip only if: no bio AND weak activity (likely spam/bot)
             if not has_bio and not has_strong_activity:
-                logger.debug(f"Skipping account with no bio and weak activity: {username}")
                 continue
 
-            # ==================================================================
-            # RECENT ACTIVITY CHECK
-            # Fetch user's repos and check for recent contributions
-            # ==================================================================
+            # Recent activity check
             if check_recent_activity:
-                has_recent_activity = await self._check_recent_activity(username)
-                if not has_recent_activity:
-                    logger.debug(f"Skipping inactive user: {username} (no activity in 6 months)")
+                has_recent = await self._check_recent_activity(username)
+                if not has_recent:
                     continue
 
-            # ==================================================================
-            # QUALITY SCORING
-            # Calculate a simple quality score based on multiple signals
-            # ==================================================================
+            # Quality scoring
             quality_score = self._calculate_quality_score(user_profile)
 
-            # Only include candidates with a minimum quality score
-            if quality_score < 3:  # Score range: 0-10
-                logger.debug(f"Skipping low-quality profile: {username} (score: {quality_score})")
+            if quality_score < 3:
                 continue
 
-            # Build candidate profile
-            candidate = {
-                "username": user_profile["login"],
-                "profile_url": user_profile["html_url"],
-                "avatar_url": user_profile.get("avatar_url"),
-                "bio": user_profile.get("bio"),
-                "name": user_profile.get("name"),
-                "location": user_profile.get("location"),
-                "email": user_profile.get("email"),
-                "hireable": user_profile.get("hireable"),
-                "company": user_profile.get("company"),
-                "public_repos": public_repos,
-                "followers": followers,
-                "following": following,
-                "quality_score": quality_score,  # Add quality score for potential ranking
-                "created_at": created_at,
-            }
-
+            candidate = self._build_candidate_profile(user_profile, quality_score)
             candidates.append(candidate)
-            seen_usernames.add(username)
+            self._processed_usernames.add(username)
 
-            logger.info(f"✅ Quality candidate: @{username} (score: {quality_score}/10)")
-
-            # Rate limiting
-            await asyncio.sleep(0.2)
+            logger.info(f"Quality candidate: @{username} (score: {quality_score}/10)")
+            await asyncio.sleep(0.15)
 
         return candidates
 
+    def _build_candidate_profile(
+        self,
+        user_profile: Dict[str, Any],
+        quality_score: int
+    ) -> Dict[str, Any]:
+        """Build a candidate profile dict from user data"""
+        return {
+            "username": user_profile["login"],
+            "profile_url": user_profile["html_url"],
+            "avatar_url": user_profile.get("avatar_url"),
+            "bio": user_profile.get("bio"),
+            "name": user_profile.get("name"),
+            "location": user_profile.get("location"),
+            "email": user_profile.get("email"),
+            "hireable": user_profile.get("hireable"),
+            "company": user_profile.get("company"),
+            "public_repos": user_profile.get("public_repos", 0),
+            "followers": user_profile.get("followers", 0),
+            "following": user_profile.get("following", 0),
+            "quality_score": quality_score,
+            "created_at": user_profile.get("created_at"),
+        }
+
+    def _deduplicate_candidates(
+        self,
+        candidates: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Remove duplicate candidates by username"""
+        seen = set()
+        unique = []
+        for c in candidates:
+            if c["username"] not in seen:
+                seen.add(c["username"])
+                unique.append(c)
+        return unique
+
     async def _check_recent_activity(self, username: str) -> bool:
-        """
-        Check if a user has recent GitHub activity (within last 6 months).
-
-        Args:
-            username: GitHub username
-
-        Returns:
-            True if user has recent activity, False otherwise
-        """
+        """Check if user has recent activity (within 6 months)"""
         try:
-            from datetime import datetime, timedelta
-
-            # Get user's recent repositories (sorted by pushed date)
             repos = await github_service.get_user_repos(username, sort="pushed", per_page=5)
 
             if not repos:
                 return False
 
-            # Check if any repo was updated in the last 6 months
             six_months_ago = datetime.now() - timedelta(days=180)
 
-            for repo in repos[:5]:  # Check top 5 most recently pushed repos
+            for repo in repos[:5]:
                 pushed_at = repo.get("pushed_at")
                 if pushed_at:
-                    # Parse ISO datetime
                     pushed_date = datetime.strptime(pushed_at[:19], "%Y-%m-%dT%H:%M:%S")
                     if pushed_date > six_months_ago:
                         return True
 
             return False
-
         except Exception as e:
             logger.warning(f"Error checking recent activity for {username}: {e}")
-            # If we can't check, don't filter out (benefit of doubt)
-            return True
+            return True  # Benefit of doubt
 
     def _calculate_quality_score(self, user_profile: Dict[str, Any]) -> int:
-        """
-        Calculate a quality score for a GitHub user profile (0-10).
-
-        Balanced scoring that doesn't over-emphasize followers.
-        Focus on genuine activity signals over popularity metrics.
-
-        Factors:
-        - Public repos count (max 3 points) - shows sustained activity
-        - Bio completeness (max 2 points) - shows professionalism
-        - Profile completeness (2 points) - name, location, company/email
-        - Followers (max 2 points) - considered but not primary
-        - Hireable flag (1 point) - shows job-seeking intent
-        - Engagement ratio (1 point bonus) - quality over quantity
-
-        Args:
-            user_profile: GitHub user profile data
-
-        Returns:
-            Quality score (0-10)
-        """
+        """Calculate quality score (0-10) for a user profile"""
         score = 0
 
-        # Public repos (max 3 points) - PRIMARY signal of activity
+        # Public repos (max 3 points)
         repos = user_profile.get("public_repos", 0)
         if repos >= 20:
             score += 3
@@ -649,7 +750,7 @@ Be specific and prioritize searchable, verifiable terms over generic description
         elif repos >= 5:
             score += 1
 
-        # Bio completeness (max 2 points) - shows professionalism
+        # Bio completeness (max 2 points)
         bio = user_profile.get("bio") or ""
         bio_length = len(bio.strip())
         if bio_length >= 50:
@@ -657,34 +758,28 @@ Be specific and prioritize searchable, verifiable terms over generic description
         elif bio_length >= 20:
             score += 1
 
-        # Profile completeness (2 points total)
-        # Has name (1 point)
+        # Profile completeness (2 points)
         if user_profile.get("name"):
             score += 1
-
-        # Has location OR (email/company) (1 point)
         if user_profile.get("location") or user_profile.get("email") or user_profile.get("company"):
             score += 1
 
-        # Followers (max 2 points) - REDUCED weight, still considered
+        # Followers (max 2 points)
         followers = user_profile.get("followers", 0)
         if followers >= 100:
             score += 2
         elif followers >= 25:
             score += 1
-        # 0-24 followers = 0 points (still acceptable!)
 
-        # Hireable flag (1 point) - actively looking
+        # Hireable flag (1 point)
         if user_profile.get("hireable"):
             score += 1
 
-        # Bonus: Healthy engagement ratio (1 point)
-        # Quality engagement matters more than raw follower count
-        followers = user_profile.get("followers", 0)
+        # Engagement ratio bonus (1 point)
         following = user_profile.get("following", 0)
         if followers > 0 and following > 0:
             ratio = followers / following
-            if 0.3 <= ratio <= 10:  # Very flexible range - avoids spam but allows different styles
+            if 0.3 <= ratio <= 10:
                 score += 1
 
-        return min(score, 10)  # Cap at 10
+        return min(score, 10)
