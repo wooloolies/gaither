@@ -11,10 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import CandidateGraph from '@/features/neo4j/components/candidate-graph'
+import { CandidateChatModal } from '@/components/chat'
 
 interface CandidateCardProps {
   candidate: Candidate
   index: number
+  jobId?: string | number | null
 }
 
 const scoreColor = (score: number) => {
@@ -24,9 +26,10 @@ const scoreColor = (score: number) => {
   return 'text-red-600 dark:text-red-400 border-red-500/30 bg-red-500/10'
 }
 
-export default function CandidateCard({ candidate, index }: CandidateCardProps) {
+export default function CandidateCard({ candidate, index, jobId }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [showGraph, setShowGraph] = useState(false)
+  const [showChat, setShowChat] = useState(false)
 
   return (
     <motion.div
@@ -100,6 +103,14 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           >
             View Graph
           </button>
+          {jobId && (
+            <button
+              onClick={() => setShowChat(true)}
+              className="text-sm font-medium bg-white dark:bg-accent-purple/10 text-accent-purple border border-accent-purple/30 px-4 py-2 rounded-xl hover:shadow-md transition-all"
+            >
+              Chat with AI
+            </button>
+          )}
           <button className="text-sm font-medium bg-accent-blue text-white px-4 py-2 rounded-xl hover:bg-accent-blue/90 hover:shadow-md transition-all">
             Contact
           </button>
@@ -136,6 +147,16 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Chat Modal */}
+      {jobId && (
+        <CandidateChatModal
+          candidate={candidate}
+          jobId={String(jobId)}
+          open={showChat}
+          onOpenChange={setShowChat}
+        />
+      )}
     </motion.div>
   )
 }

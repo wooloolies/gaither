@@ -197,7 +197,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
               <span className="text-sm text-muted-foreground">{candidates.length} found</span>
             </div>
             <div className="p-6 overflow-y-auto flex-1">
-              <CandidateGrid candidates={candidates} />
+              <CandidateGrid candidates={candidates} jobId={jobId} />
             </div>
             {candidates.length > 0 && (
               <div className="p-6 border-t border-border">
