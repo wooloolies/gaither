@@ -41,11 +41,21 @@ export function CandidateChatModal({
     sendMessage,
     clearHistory,
     clearError,
+    loadSession,
   } = useCandidateChat({
     candidateId: candidate.id,
     jobId,
-    autoCreateSession: true,
+    autoCreateSession: false, // Don't auto-load, we'll load when modal opens
   })
+
+  /**
+   * Load chat session when modal opens
+   */
+  useEffect(() => {
+    if (open) {
+      loadSession()
+    }
+  }, [open, loadSession])
 
   /**
    * Handle clear history with confirmation

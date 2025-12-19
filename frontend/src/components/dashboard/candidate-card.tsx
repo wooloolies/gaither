@@ -148,8 +148,8 @@ export default function CandidateCard({ candidate, index, jobId }: CandidateCard
         </DialogContent>
       </Dialog>
 
-      {/* Chat Modal */}
-      {jobId && (
+      {/* Chat Modal - Only render when opened to avoid premature API calls */}
+      {jobId && showChat && (
         <CandidateChatModal
           candidate={candidate}
           jobId={String(jobId)}
