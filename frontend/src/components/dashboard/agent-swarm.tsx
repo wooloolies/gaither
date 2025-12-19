@@ -14,6 +14,7 @@ interface AgentSwarmProps {
 function ConnectionLines({ agentStates }: { agentStates: AgentStates }) {
   const hunterActive = agentStates.hunter === 'active'
   const analyzerActive = agentStates.analyzer === 'active'
+  const engagerActive = agentStates.engager === 'active'
 
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -33,7 +34,7 @@ function ConnectionLines({ agentStates }: { agentStates: AgentStates }) {
         fill="none"
         strokeWidth="0.8"
         strokeDasharray="2 2"
-        className={analyzerActive ? 'stroke-blue-400/40' : 'stroke-border/20'}
+        className={analyzerActive || engagerActive ? 'stroke-blue-400/40' : 'stroke-border/20'}
       />
       {/* Hunter to Engager arc */}
       <motion.path
