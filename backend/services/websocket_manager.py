@@ -4,7 +4,7 @@ WebSocket manager for handling real-time connections.
 from fastapi import WebSocket
 from typing import Dict, List
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class WebSocketManager:
 
         message = json.dumps({
             "event": event,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "job_id": job_id,
             "data": data
         })

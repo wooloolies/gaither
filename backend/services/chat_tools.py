@@ -6,7 +6,7 @@ import logging
 import asyncio
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from database import DBCandidate, DBJob
 from services.github_service import GitHubService
 from services.llm import get_llm_service
@@ -375,7 +375,7 @@ class ChatToolService:
             Activity summary with trends and active languages
         """
         months = args.get("months", 6)
-        cutoff_date = datetime.now(datetime.UTC) - timedelta(days=months * 30)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=months * 30)
 
         # Fetch candidate
         candidate = self.db.query(DBCandidate).filter_by(id=self.candidate_id).first()
