@@ -224,6 +224,8 @@ export const useAgentStore = create<AgentStoreState>((set) => ({
             ...metrics,
             messagesGenerated: metrics.messagesGenerated + 1,
           }
+        } else if (event.event === 'engager.completed') {
+          agentStates = { ...agentStates, engager: 'idle' }
         }
       }
 
@@ -231,7 +233,7 @@ export const useAgentStore = create<AgentStoreState>((set) => ({
         agentStates = {
           hunter: 'completed',
           analyzer: 'completed',
-          engager: 'completed',
+          engager: 'idle',  // Engager stays idle (on-demand only)
         }
       }
 

@@ -3,6 +3,7 @@ Analyzer Agent - Evaluates candidate skills and generates fit scores.
 """
 import asyncio
 import logging
+import uuid
 from typing import Dict, Any, List
 from agents.base import BaseAgent
 from services.llm import get_llm_service
@@ -43,6 +44,10 @@ class AnalyzerAgent(BaseAgent):
                     await output_queue.put(None)
                     break
 
+                # Generate UUID for this candidate upfront (before any events)
+                candidate_uuid = str(uuid.uuid4())
+                candidate["id"] = candidate_uuid
+
                 await self.emit_event(
                     "started",
                     {"candidate": candidate["username"]},
@@ -60,11 +65,11 @@ class AnalyzerAgent(BaseAgent):
                     # Send to Engager
                     await output_queue.put(candidate)
 
-                    # Emit completion event
+                    # Emit completion event with real UUID
                     await self.emit_event(
                         "completed",
                         {
-                            "candidate_id": f"{job_id}_{candidate['username']}",
+                            "candidate_id": candidate_uuid,  # Use real UUID instead of composite
                             "username": candidate["username"],
                             "profile_url": candidate["profile_url"],
                             "avatar_url": candidate.get("avatar_url"),

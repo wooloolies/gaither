@@ -7,10 +7,13 @@ from google.genai import types
 import asyncio
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from config import settings
 from .base import (
     AbstractLLMService,
+    ChatMessage,
+    ChatResponse,
+    ToolCall,
     LLMServiceError,
     LLMConfigurationError,
     LLMAPIError,
@@ -247,6 +250,137 @@ class GeminiService(AbstractLLMService):
 
             logger.info("Gemini analysis successful")
             return response.text
+
+        except asyncio.TimeoutError:
+            logger.error(f"Gemini API timeout after {timeout}s")
+            raise LLMTimeoutError(f"Gemini API call timed out after {timeout} seconds") from None
+
+        except Exception as e:
+            logger.error(f"Error calling Gemini API: {e}")
+            # Wrap generic exceptions in LLMAPIError
+            if not isinstance(e, (LLMServiceError, asyncio.TimeoutError)):
+                raise LLMAPIError(f"Gemini API error: {e}") from e
+            raise
+
+    async def chat(
+        self,
+        messages: List[ChatMessage],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        max_tokens: int = 4096,
+        timeout: int = 60
+    ) -> ChatResponse:
+        """
+        Multi-turn chat with Gemini with optional tool calling.
+
+        Args:
+            messages: Conversation history (system, user, assistant messages)
+            tools: Optional list of tool definitions
+            max_tokens: Maximum tokens for response
+            timeout: Timeout in seconds (default: 60)
+
+        Returns:
+            ChatResponse with content and any tool calls
+        """
+        return await self._retry_with_backoff(
+            self._chat_impl,
+            messages,
+            tools,
+            max_tokens,
+            timeout
+        )
+
+    async def _chat_impl(
+        self,
+        messages: List[ChatMessage],
+        tools: Optional[List[Dict[str, Any]]],
+        max_tokens: int,
+        timeout: int
+    ) -> ChatResponse:
+        """Implementation of chat with timeout"""
+        # Wait for rate limit before making request
+        await self._wait_for_rate_limit()
+
+        try:
+            # Convert messages to Gemini contents format
+            # Gemini accepts: role="user" or role="model" (model = assistant)
+            # System messages can be added as user messages or via system_instruction
+            contents = []
+            system_instruction = None
+
+            for msg in messages:
+                if msg.role == "system":
+                    # Collect system messages for system_instruction
+                    if system_instruction is None:
+                        system_instruction = msg.content
+                    else:
+                        system_instruction += "\n\n" + msg.content
+                elif msg.role == "user":
+                    contents.append(types.Content(role="user", parts=[types.Part(text=msg.content)]))
+                elif msg.role == "assistant":
+                    contents.append(types.Content(role="model", parts=[types.Part(text=msg.content)]))
+
+            # Build config
+            config_params = {
+                "temperature": 0.7,
+                "max_output_tokens": max_tokens
+            }
+
+            # Add tools if provided
+            if tools:
+                # Convert tools to Gemini format
+                function_declarations = []
+                for tool in tools:
+                    function_declarations.append({
+                        "name": tool["name"],
+                        "description": tool.get("description", ""),
+                        "parameters": tool.get("input_schema", tool.get("parameters", {}))
+                    })
+
+                gemini_tools = types.Tool(function_declarations=function_declarations)
+                config_params["tools"] = [gemini_tools]
+                
+            if system_instruction:
+                config_params["system_instruction"] = system_instruction
+
+            config = types.GenerateContentConfig(**config_params)
+
+            # Build request parameters
+            request_params = {
+                "model": self.model_name,
+                "contents": contents,
+                "config": config
+            }
+
+            
+            # Call Gemini API with timeout
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self.client.models.generate_content,
+                    **request_params
+                ),
+                timeout=timeout
+            )
+
+            # Extract text content and tool calls from response
+            text_content = ""
+            tool_calls = []
+
+            if response.candidates and len(response.candidates) > 0:
+                candidate = response.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        # Extract text
+                        if hasattr(part, 'text') and part.text:
+                            text_content += part.text
+                        # Extract function calls
+                        elif hasattr(part, 'function_call') and part.function_call:
+                            tool_calls.append(ToolCall(
+                                tool_name=part.function_call.name,
+                                arguments=dict(part.function_call.args)
+                            ))
+
+            logger.info(f"Gemini chat successful. Tool calls: {len(tool_calls)}")
+            return ChatResponse(content=text_content, tool_calls=tool_calls)
 
         except asyncio.TimeoutError:
             logger.error(f"Gemini API timeout after {timeout}s")

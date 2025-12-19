@@ -79,6 +79,7 @@ class DBCandidate(Base):
     # Relationships
     job = relationship("DBJob", back_populates="candidates")
     message = relationship("DBMessage", back_populates="candidate", uselist=False, cascade="all, delete-orphan")
+    chat_sessions = relationship("DBChatSession", back_populates="candidate", cascade="all, delete-orphan")
 
 
 class DBMessage(Base):
@@ -93,6 +94,44 @@ class DBMessage(Base):
 
     # Relationships
     candidate = relationship("DBCandidate", back_populates="message")
+
+
+class DBChatSession(Base):
+    """Chat session database model"""
+    __tablename__ = "chat_sessions"
+    __table_args__ = (
+        Index('idx_session_candidate', 'candidate_id'),
+    )
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    candidate_id = Column(String, ForeignKey("candidates.id"), nullable=False)
+    job_id = Column(String, ForeignKey("jobs.id"), nullable=False)
+    model_provider = Column(String, nullable=False)  # "claude" or "gemini"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    candidate = relationship("DBCandidate", back_populates="chat_sessions")
+    job = relationship("DBJob")
+    messages = relationship("DBChatMessage", back_populates="session", cascade="all, delete-orphan", order_by="DBChatMessage.created_at")
+
+
+class DBChatMessage(Base):
+    """Chat message database model"""
+    __tablename__ = "chat_messages"
+    __table_args__ = (
+        Index('idx_message_session', 'session_id', 'created_at'),
+    )
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(String, ForeignKey("chat_sessions.id"), nullable=False)
+    role = Column(String, nullable=False)  # "user", "assistant", "system"
+    content = Column(Text, nullable=False)
+    tool_calls = Column(JSON, nullable=True)  # Tracks tool usage: [{"tool": "...", "arguments": {...}, "result": {...}}]
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    session = relationship("DBChatSession", back_populates="messages")
 
 
 # Database initialization

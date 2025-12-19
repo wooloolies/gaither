@@ -113,3 +113,59 @@ class WeaviateAskRequest(BaseModel):
 class WeaviateAskResponse(BaseModel):
     """Response payload for Weaviate QueryAgent ask."""
     answer: str
+
+
+# Chat API Schemas
+
+class ToolCallSchema(BaseModel):
+    """Schema for a tool/function call made by the LLM"""
+    tool: str = Field(..., description="Name of the tool that was called")
+    arguments: dict = Field(..., description="Arguments passed to the tool")
+    result: dict = Field(..., description="Result returned by the tool")
+
+
+class ChatMessageBase(BaseModel):
+    """Base chat message schema"""
+    role: Literal["user", "assistant", "system"] = Field(..., description="Role of the message sender")
+    content: str = Field(..., min_length=1, max_length=10000, description="Message content")
+
+
+class ChatMessageCreate(ChatMessageBase):
+    """Schema for creating a chat message"""
+    pass
+
+
+class ChatMessage(ChatMessageBase):
+    """Full chat message schema with metadata"""
+    id: str
+    session_id: str
+    tool_calls: Optional[List[ToolCallSchema]] = None
+    created_at: datetime
+
+
+class ChatSessionCreate(BaseModel):
+    """Schema for creating a new chat session"""
+    candidate_id: str = Field(..., description="ID of the candidate to chat about")
+    job_id: str = Field(..., description="ID of the job the candidate is associated with")
+
+
+class ChatSession(BaseModel):
+    """Full chat session schema"""
+    id: str
+    candidate_id: str
+    job_id: str
+    model_provider: str = Field(..., description="LLM provider used for this session")
+    created_at: datetime
+    updated_at: datetime
+    messages: List[ChatMessage] = Field(default_factory=list, description="Conversation history")
+
+
+class SendMessageRequest(BaseModel):
+    """Request schema for sending a message"""
+    content: str = Field(..., min_length=1, max_length=2000, description="Message content (max 2000 chars)")
+
+
+class SendMessageResponse(BaseModel):
+    """Response schema after sending a message"""
+    message: ChatMessage = Field(..., description="The assistant's response message")
+    tool_calls: List[ToolCallSchema] = Field(default_factory=list, description="Tools used during the response")

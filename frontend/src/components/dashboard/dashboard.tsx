@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'motion/react'
+import { useRouter } from 'next/navigation'
 import { useAgentStore } from '@/store/agent-store'
 import { useAgentWebSocket } from '@/hooks/use-websocket'
-import { jobsApi, type JobRequest, type JobResponse } from '@/lib/api-client'
-import JobForm from '@/components/dashboard/job-form'
+import { jobsApi, type JobResponse } from '@/lib/api-client'
 import AgentStatus from '@/components/dashboard/agent-status'
 import CandidateGrid from '@/components/candidate-grid'
 import MetricsPanel from '@/components/dashboard/metrics-panel'
@@ -15,10 +14,11 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ initialJobId = null }: DashboardProps) {
+  const router = useRouter()
   const [jobId, setJobId] = useState<JobResponse['id'] | null>(initialJobId)
   const [isLoading, setIsLoading] = useState(false)
 
-  const { agentStates, candidates, events, metrics, setCurrentJob, reset } = useAgentStore()
+  const { agentStates, candidates, events, metrics, reset } = useAgentStore()
   const { isConnected } = useAgentWebSocket(jobId)
 
   // Sync jobId with initialJobId prop
@@ -43,27 +43,10 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
     }
   }, [jobId, agentStates.hunter])
 
-  const handleJobSubmit = async (jobData: JobRequest) => {
-    setIsLoading(true)
-    try {
-      reset()
-      const job = await jobsApi.create(jobData)
-      setJobId(job.id)
-      setCurrentJob(job)
-      await jobsApi.start(job.id)
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error starting job:', error)
-      alert('Error starting job. Please check console for details.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleReset = () => {
     if (confirm('Are you sure you want to start a new search?')) {
-      setJobId(null)
       reset()
+      router.push('/hire')
     }
   }
 
@@ -81,63 +64,19 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
     }
   }
 
+  // Redirect to /hire if no jobId - should not render Dashboard without a job
+  useEffect(() => {
+    if (!jobId && !initialJobId) {
+      router.push('/hire')
+    }
+  }, [jobId, initialJobId, router])
+
+  // Show loading while redirecting
   if (!jobId) {
     return (
       <div className="relative min-h-screen bg-background flex items-center justify-center p-6">
-        {/* Subtle pixel grid background */}
-        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none">
-          <div
-            className="w-full h-full"
-            style={{
-              backgroundImage:
-                'linear-gradient(to right, black 1px, transparent 1px), linear-gradient(to bottom, black 1px, transparent 1px)',
-              backgroundSize: '20px 20px',
-            }}
-          />
-        </div>
-
-        <div className="relative z-10 max-w-6xl w-full">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <h1 className="font-pixelify text-5xl md:text-6xl mb-4 tracking-tight text-foreground">Gaither</h1>
-            <p className="text-xl text-muted-foreground font-light max-w-2xl mx-auto">
-              Autonomous Multi-Agent Recruitment System
-            </p>
-          </motion.div>
-
-          {/* Feature Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {[
-              { title: 'Hunter', desc: 'Autonomous GitHub Scanning', color: 'text-emerald-500' },
-              { title: 'Analyzer', desc: 'Deep Code Evaluation', color: 'text-blue-500' },
-              { title: 'Engager', desc: 'Personalized Outreach', color: 'text-purple-500' },
-            ].map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + i * 0.1 }}
-                className="bg-white dark:bg-panel border border-border p-8 rounded-2xl hover:shadow-lg transition-all text-center"
-              >
-                <div className={`text-2xl font-bold mb-2 ${feature.color}`}>
-                  {feature.title}
-                </div>
-                <div className="text-muted-foreground">{feature.desc}</div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-panel border border-border p-8 rounded-2xl shadow-xl"
-          >
-            <JobForm onSubmit={handleJobSubmit} isLoading={isLoading} />
-          </motion.div>
+        <div className="text-center">
+          <p className="font-stzhongsong text-xl text-foreground">Redirecting to job creation...</p>
         </div>
       </div>
     )
@@ -197,7 +136,7 @@ export default function Dashboard({ initialJobId = null }: DashboardProps) {
               <span className="text-sm text-muted-foreground">{candidates.length} found</span>
             </div>
             <div className="p-6 overflow-y-auto flex-1">
-              <CandidateGrid candidates={candidates} />
+              <CandidateGrid candidates={candidates} jobId={jobId} />
             </div>
             {candidates.length > 0 && (
               <div className="p-6 border-t border-border">

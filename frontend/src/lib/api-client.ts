@@ -100,4 +100,105 @@ export const candidatesApi = {
   },
 }
 
+// Chat API Types
+export interface ToolCallSchema {
+  tool: string
+  arguments: Record<string, unknown>
+  result: Record<string, unknown>
+}
+
+export interface ChatMessageResponse {
+  id: string
+  session_id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  tool_calls?: ToolCallSchema[] | null
+  created_at: string
+}
+
+export interface ChatSessionResponse {
+  id: string
+  candidate_id: string
+  job_id: string
+  model_provider: string
+  created_at: string
+  updated_at: string
+  messages: ChatMessageResponse[]
+}
+
+export interface SendMessageResponse {
+  message: ChatMessageResponse
+  tool_calls: ToolCallSchema[]
+}
+
+export const chatApi = {
+  /**
+   * Create a new chat session for a candidate
+   */
+  createSession: async (candidateId: string, jobId: string): Promise<ChatSessionResponse> => {
+    const response = await apiClient.post<ChatSessionResponse>('/api/chat/sessions', {
+      candidate_id: candidateId,
+      job_id: jobId,
+    })
+    return response.data
+  },
+
+  /**
+   * Get a chat session by ID
+   */
+  getSession: async (sessionId: string): Promise<ChatSessionResponse> => {
+    const response = await apiClient.get<ChatSessionResponse>(`/api/chat/sessions/${sessionId}`)
+    return response.data
+  },
+
+  /**
+   * Get the latest chat session for a candidate
+   */
+  getCandidateSession: async (candidateId: string, latest = true): Promise<ChatSessionResponse> => {
+    const response = await apiClient.get<ChatSessionResponse>(
+      `/api/chat/sessions/by-candidate/${candidateId}`,
+      { params: { latest } }
+    )
+    return response.data
+  },
+
+  /**
+   * Send a message and get AI response
+   */
+  sendMessage: async (sessionId: string, content: string): Promise<SendMessageResponse> => {
+    const response = await apiClient.post<SendMessageResponse>(
+      `/api/chat/sessions/${sessionId}/messages`,
+      { content }
+    )
+    return response.data
+  },
+
+  /**
+   * Delete a chat session
+   */
+  deleteSession: async (sessionId: string): Promise<void> => {
+    await apiClient.delete(`/api/chat/sessions/${sessionId}`)
+  },
+
+  /**
+   * Clear all chat history for a candidate (deletes all sessions)
+   */
+  clearCandidateHistory: async (candidateId: string): Promise<{ sessions_deleted: number }> => {
+    const response = await apiClient.delete<{ message: string; candidate_id: string; sessions_deleted: number }>(
+      `/api/chat/candidates/${candidateId}/history`
+    )
+    return response.data
+  },
+
+  /**
+   * Clear all messages from a session but keep the session
+   */
+  clearSessionMessages: async (sessionId: string): Promise<{ messages_deleted: number }> => {
+    const response = await apiClient.delete<{ message: string; session_id: string; messages_deleted: number }>(
+      `/api/chat/sessions/${sessionId}/messages`
+    )
+    return response.data
+  },
+}
+
 export default apiClient

@@ -1,6 +1,5 @@
 export { default } from '@/components/dashboard/dashboard'
 export { default as Dashboard } from '@/components/dashboard/dashboard'
-export { default as JobForm } from '@/components/dashboard/job-form'
 export { default as AgentStatus } from '@/components/dashboard/agent-status'
 export { default as AgentSwarm } from '@/components/dashboard/agent-swarm'
 export { default as AgentCharacter } from '@/components/dashboard/agent-character'
