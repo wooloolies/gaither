@@ -19,10 +19,17 @@ export default function CandidateGrid({ candidates, jobId }: CandidateGridProps)
     )
   }
 
+  // Sort candidates by score in descending order
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    const scoreA = a.score ?? 0
+    const scoreB = b.score ?? 0
+    return scoreB - scoreA
+  })
+
   return (
     <div>
       <div className="space-y-6">
-        {candidates.map((candidate, index) => (
+        {sortedCandidates.map((candidate, index) => (
           <CandidateCard key={candidate.id} candidate={candidate} index={index} jobId={jobId} />
         ))}
       </div>

@@ -155,6 +155,7 @@ class Neo4jService:
         bio: Optional[str] = None,
         top_repo: Union[List[str], List[Dict[str, Any]]] = [],
         education: List[str] = [],
+        avatar_url: Optional[str] = None,
     ) -> str:
         """
         Store or update a candidate in Neo4j using dynamic query building.
@@ -184,7 +185,8 @@ class Neo4jService:
                 location=location,
                 skills=skills,
                 top_repo=top_repo,
-                education=education
+                education=education,
+                avatar_url=avatar_url
             )
             
             # Convert dataclass to dict for params
@@ -195,7 +197,8 @@ class Neo4jService:
             
             # Update User properties - only candidateId is kept on the model
             query_parts.append("""
-            SET u.candidateId = $id
+            SET u.candidateId = $id,
+                u.avatarUrl = $avatar_url
             """)
 
             # Handle Location (only if not None and not empty)
