@@ -8,3 +8,4 @@ class Neo4jCandidate:
     top_repo: list[str] = field(default_factory=list)
     skills: list[str] = field(default_factory=list)
     education: list[str] = field(default_factory=list)
+    avatar_url: str | None = field(default=None)

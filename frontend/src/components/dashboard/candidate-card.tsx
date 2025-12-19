@@ -131,27 +131,59 @@ export default function CandidateCard({ candidate, index, jobId }: CandidateCard
         >
           {expanded ? '↑ Hide Message' : message ? '↓ View Message' : 'No message yet'}
         </button>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={() => setShowGraph(true)}
-            className="text-sm font-medium bg-white dark:bg-accent-blue/10 text-accent-blue border border-accent-blue/30 px-4 py-2 rounded-xl hover:shadow-md transition-all"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground border border-border hover:border-accent-blue/50 px-4 py-2 rounded-xl hover:bg-accent-blue/5 transition-all flex items-center gap-2"
           >
-            View Graph
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+            </svg>
+            Graph
           </button>
           {jobId && (
             <button
               onClick={() => setShowChat(true)}
-              className="text-sm font-medium bg-white dark:bg-accent-purple/10 text-accent-purple border border-accent-purple/30 px-4 py-2 rounded-xl hover:shadow-md transition-all"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground border border-border hover:border-accent-purple/50 px-4 py-2 rounded-xl hover:bg-accent-purple/5 transition-all flex items-center gap-2"
             >
-              Chat with AI
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              Chat
             </button>
           )}
           <button
             onClick={handleGenerateMessage}
             disabled={generatingMessage}
-            className="text-sm font-medium bg-accent-blue text-white px-4 py-2 rounded-xl hover:bg-accent-blue/90 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`text-sm font-medium px-4 py-2 rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+              message 
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' 
+                : 'bg-accent-blue/10 text-accent-blue border border-accent-blue/30 hover:bg-accent-blue/20'
+            }`}
           >
-            {generatingMessage ? '✨ Generating...' : message ? '✅ Message Ready' : '✉️ Generate Message'}
+            {generatingMessage ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Generating...
+              </>
+            ) : message ? (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Message Ready
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+                Generate Message
+              </>
+            )}
           </button>
         </div>
       </div>

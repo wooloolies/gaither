@@ -24,6 +24,9 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
     const containerRef = useRef<HTMLDivElement>(null)
     const [initialUsername] = useState(username) // Store initial username for reset
 
+    // Avatar image cache - stores loaded Image objects
+    const avatarCache = useRef<Map<string, HTMLImageElement>>(new Map())
+
     // Reset function to restore graph to initial state
     const handleReset = () => {
         // Clear all fixed positions
@@ -55,6 +58,68 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
         }
     }
 
+    // Avatar loader function
+    const loadAvatar = (url: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+            // Check cache first
+            if (avatarCache.current.has(url)) {
+                resolve(avatarCache.current.get(url)!)
+                return
+            }
+
+            // Load image
+            const img = new Image()
+            img.crossOrigin = 'anonymous' // Handle CORS for GitHub avatars
+            img.onload = () => {
+                avatarCache.current.set(url, img)
+                resolve(img)
+            }
+            img.onerror = () => {
+                reject(new Error('Failed to load avatar'))
+            }
+            img.src = url
+        })
+    }
+
+    // Initials fallback helpers
+    const getInitials = (username: string): string => {
+        if (!username) return '?'
+        return username.substring(0, 2).toUpperCase()
+    }
+
+    const getColorFromUsername = (username: string): string => {
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+            '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6'
+        ]
+
+        let hash = 0
+        for (let i = 0; i < username.length; i++) {
+            hash = username.charCodeAt(i) + ((hash << 5) - hash)
+        }
+
+        return colors[Math.abs(hash) % colors.length]
+    }
+
+    // Node type helper functions to avoid repeated checks
+    const isUserNode = (node: any): boolean => 
+        node.labels?.includes('User') || node.labels?.includes('Candidate') || !!node.username
+
+    const isRepoNode = (node: any): boolean => 
+        node.labels?.includes('Repo') || node.label === 'Repo'
+
+    const isCandidateNode = (node: any): boolean => 
+        node.username === username
+
+    const getNodeDisplayName = (node: any): string => 
+        String(node.name || node.username || node.id)
+
+    // Avatar/label size constants
+    const CANDIDATE_AVATAR_RADIUS = 30
+    const USER_AVATAR_RADIUS = 20
+    const CANDIDATE_LABEL_FONT_SIZE = 14
+    const USER_LABEL_FONT_SIZE = 12
+
     // Measure container size using ResizeObserver for reliable sizing
     useEffect(() => {
         const updateDimensions = () => {
@@ -79,9 +144,7 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
         updateDimensions()
         const timeoutId = setTimeout(updateDimensions, 100)
 
-        window.addEventListener('resize', updateDimensions)
         return () => {
-            window.removeEventListener('resize', updateDimensions)
             resizeObserver.disconnect()
             clearTimeout(timeoutId)
         }
@@ -161,31 +224,50 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
         fetchCandidateGraph()
     }, [username])
 
+    // Pre-load avatars for User nodes when graph data changes
+    useEffect(() => {
+        graphData.nodes.forEach((node: any) => {
+            const avatarUrl = node.avatarUrl || node.avatar_url
+
+            if (isUserNode(node) && avatarUrl && !avatarCache.current.has(avatarUrl)) {
+                loadAvatar(avatarUrl).catch(err => {
+                    console.warn(`Failed to load avatar for ${node.username}:`, err)
+                })
+            }
+        })
+    }, [graphData])
+
     // Configure d3 forces
     useEffect(() => {
         if (graphRef.current && graphData.nodes.length > 0) {
             const fg = graphRef.current
 
-            // Add collision force to prevent text label overlap
-            // Significantly increased spacing to strictly prevent overlap
+            // Add collision force to prevent node overlap
             fg.d3Force('collision', d3.forceCollide().radius((node: any) => {
+                const isCandidate = isCandidateNode(node)
+
+                // User/Candidate nodes with avatars - use circle radius + label
+                if (isUserNode(node)) {
+                    const avatarRadius = isCandidate ? CANDIDATE_AVATAR_RADIUS : USER_AVATAR_RADIUS
+                    const labelHeight = isCandidate ? CANDIDATE_LABEL_FONT_SIZE : USER_LABEL_FONT_SIZE
+                    // Account for both avatar circle and label below
+                    return avatarRadius + labelHeight + 8 // 8px spacing
+                }
+
+                // Relationship labels - small collision
+                if (node.type === 'relationship_label') {
+                    const fontSize = 12
+                    const textWidth = (node.name || '').length * fontSize * 0.6
+                    return textWidth * 0.6
+                }
+
+                // Other nodes (Skills, Repos, etc.) - text-based collision
                 const label = String(node.name || node.username || node.id)
-                const isCandidate = node.username === username
-
-                // Extra buffer for candidate node
-                if (isCandidate) return 100;
-
-                const fontSize = node.type === 'relationship_label' ? 12 : 16
+                const fontSize = 16
                 const textWidth = label.length * fontSize * 0.6
-                // Large padding to ensure no overlaps
-                const padding = fontSize * (node.type === 'relationship_label' ? 0.8 : 1.5)
-                const textBoxWidth = textWidth + padding * 2
-                const textBoxHeight = fontSize + padding * 2
-
-                // Use the larger dimension as base size
-                const nodeSize = Math.max(textBoxWidth, textBoxHeight) / 2
-                return nodeSize * (node.type === 'relationship_label' ? 1.2 : 2.0)
-            }).strength(1.0).iterations(10)) // Max strength and more iterations for rigidity
+                const padding = fontSize * 1.5
+                return (textWidth + padding * 2) / 2 * 2.0
+            }).strength(1.0).iterations(10))
 
             // Adjust link distance - reduced slightly since links are now split in two segments
             // Total distance Source -> Label -> Target will be approx 2x this
@@ -412,10 +494,9 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
                 nodeColor={(node: any) => getNodeColor(node)}
                 // We handle link labels via nodes now, so no link labels needed
                 linkLabel={() => ''}
-                linkColor={() => '#ccc'} // Lighter link color
-                linkWidth={1.5}
+                // linkColor and linkWidth are handled in linkCanvasObject
                 nodeVal={(node: any) => {
-                    if (node.username === username) return 5;
+                    if (isCandidateNode(node)) return 5;
                     if (node.type === 'relationship_label') return 1;
                     return 3;
                 }}
@@ -440,23 +521,21 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
                     if (node.type === 'relationship_label') return;
 
                     // Check if this is a Repo node
-                    const isRepo = node.labels?.includes('Repo') || node.label === 'Repo'
-                    if (isRepo && node.name) {
+                    if (isRepoNode(node) && node.name) {
                         setSelectedRepo(node)
                         setRepoAnalysis(null) // Reset analysis
                         return;
                     }
 
                     // Check if this is a User node (has username)
-                    const isUser = node.labels?.includes('User') || node.username
-                    if (isUser && node.username && node.username !== username) {
+                    if (isUserNode(node) && node.username && !isCandidateNode(node)) {
                         if (onUsernameChange) {
                             onUsernameChange(node.username)
                         }
                     }
                 }}
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
-                    const label = String(node.name || node.username || node.id);
+                    const label = getNodeDisplayName(node);
 
                     // Special rendering for Relationship Label Nodes
                     if (node.type === 'relationship_label') {
@@ -496,9 +575,90 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
                     }
 
                     // Standard Node Rendering
-                    const isCandidate = node.username === username
-                    const isRepo = node.labels?.includes('Repo') || node.label === 'Repo'
-                    const baseFontSize = isCandidate ? 24 : 16
+                    const isCandidate = isCandidateNode(node)
+                    const isUser = isUserNode(node)
+                    const isRepo = isRepoNode(node)
+
+                    // User/Candidate nodes - render avatars
+                    if (isUser) {
+                        const avatarUrl = node.avatarUrl || node.avatar_url
+                        const displayName = getNodeDisplayName(node)
+                        const radius = isCandidate ? CANDIDATE_AVATAR_RADIUS : USER_AVATAR_RADIUS
+                        const labelFontSize = (isCandidate ? CANDIDATE_LABEL_FONT_SIZE : USER_LABEL_FONT_SIZE) / globalScale
+
+                        // Try to draw avatar image
+                        let drewAvatar = false
+                        if (avatarUrl && avatarCache.current.has(avatarUrl)) {
+                            const img = avatarCache.current.get(avatarUrl)!
+
+                            ctx.save()
+                            ctx.beginPath()
+                            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI)
+                            ctx.closePath()
+                            ctx.clip()
+
+                            ctx.drawImage(img, node.x - radius, node.y - radius, radius * 2, radius * 2)
+                            ctx.restore()
+
+                            // Border
+                            ctx.beginPath()
+                            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI)
+                            ctx.strokeStyle = isCandidate ? '#c43787' : '#2196F3'
+                            ctx.lineWidth = (isCandidate ? 3 : 2) / globalScale
+                            ctx.stroke()
+
+                            drewAvatar = true
+                        }
+
+                        // Fallback to initials
+                        if (!drewAvatar) {
+                            const initials = getInitials(displayName)
+                            const bgColor = getColorFromUsername(displayName)
+
+                            ctx.beginPath()
+                            ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI)
+                            ctx.fillStyle = bgColor
+                            ctx.fill()
+
+                            ctx.strokeStyle = isCandidate ? '#c43787' : '#2196F3'
+                            ctx.lineWidth = (isCandidate ? 3 : 2) / globalScale
+                            ctx.stroke()
+
+                            const initialsFontSize = radius * 0.8  // Keep proportional to circle, not zoom
+                            ctx.font = `bold ${initialsFontSize}px Sans-Serif`
+                            ctx.textAlign = 'center'
+                            ctx.textBaseline = 'middle'
+                            ctx.fillStyle = '#FFFFFF'
+                            ctx.fillText(initials, node.x, node.y)
+                        }
+
+                        // Username label below avatar
+                        ctx.font = `${labelFontSize}px Sans-Serif`
+                        ctx.textAlign = 'center'
+                        ctx.textBaseline = 'top'
+
+                        const labelText = displayName
+                        const labelWidth = ctx.measureText(labelText).width
+                        const labelPadding = 4 / globalScale
+                        const labelY = node.y + radius + (4 / globalScale)
+
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+                        ctx.fillRect(
+                            node.x - labelWidth / 2 - labelPadding,
+                            labelY,
+                            labelWidth + labelPadding * 2,
+                            labelFontSize + labelPadding
+                        )
+
+                        ctx.fillStyle = '#333'
+                        ctx.fillText(labelText, node.x, labelY + labelPadding / 2)
+
+                        node.__bckgDimensions = [radius * 2, radius * 2 + labelFontSize + 8]
+                        return
+                    }
+
+                    // Non-user nodes - keep existing text rendering
+                    const baseFontSize = 16
                     const fontSize = baseFontSize / globalScale
                     ctx.font = `bold ${fontSize}px Sans-Serif`
                     ctx.textAlign = 'center'
@@ -507,7 +667,7 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
                     const textWidth = ctx.measureText(label).width
                     const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.3)
 
-                    ctx.fillStyle = isCandidate ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.8)'
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
                     ctx.fillRect(
                         node.x - bckgDimensions[0] / 2,
                         node.y - bckgDimensions[1] / 2,
@@ -519,7 +679,6 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
                     ctx.fillStyle = nodeColor
                     ctx.fillText(label, node.x, node.y)
 
-                    // Add underline for Repo nodes to indicate they're clickable
                     if (isRepo && node.name) {
                         ctx.beginPath()
                         ctx.moveTo(node.x - textWidth / 2, node.y + fontSize / 2)
@@ -545,15 +704,39 @@ function CandidateGraph({ username, height = 600, onUsernameChange }: CandidateG
                     ctx.stroke()
                 }}
                 nodePointerAreaPaint={(node: any, color, ctx) => {
-                    ctx.fillStyle = color
-                    const bckgDimensions = node.__bckgDimensions
-                    if (bckgDimensions) {
+                    if (isUserNode(node)) {
+                        // Circular click area for avatar nodes
+                        const isCandidate = isCandidateNode(node)
+                        const radius = isCandidate ? CANDIDATE_AVATAR_RADIUS : USER_AVATAR_RADIUS
+
+                        ctx.fillStyle = color
+                        ctx.beginPath()
+                        ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI)
+                        ctx.fill()
+
+                        // Also include label area
+                        const labelFontSize = isCandidate ? CANDIDATE_LABEL_FONT_SIZE : USER_LABEL_FONT_SIZE
+                        const labelText = getNodeDisplayName(node)
+                        const labelWidth = ctx.measureText(labelText).width || labelText.length * labelFontSize * 0.6
+                        const labelY = node.y + radius + 4
                         ctx.fillRect(
-                            node.x - bckgDimensions[0] / 2,
-                            node.y - bckgDimensions[1] / 2,
-                            bckgDimensions[0],
-                            bckgDimensions[1]
+                            node.x - labelWidth / 2 - 4,
+                            labelY,
+                            labelWidth + 8,
+                            labelFontSize + 4
                         )
+                    } else {
+                        // Rectangle for non-user nodes
+                        ctx.fillStyle = color
+                        const bckgDimensions = node.__bckgDimensions
+                        if (bckgDimensions) {
+                            ctx.fillRect(
+                                node.x - bckgDimensions[0] / 2,
+                                node.y - bckgDimensions[1] / 2,
+                                bckgDimensions[0],
+                                bckgDimensions[1]
+                            )
+                        }
                     }
                 }}
             />
