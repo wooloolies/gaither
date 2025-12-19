@@ -99,25 +99,8 @@ def db_session_to_response(db_session: DBChatSession) -> ChatSession:
     )
 
 
-def resolve_candidate_id(candidate_id: str, db: Session) -> DBCandidate:
-    """
-    Resolve candidate by UUID or composite ID (job_id_username).
-    The analyzer emits composite IDs before DB save, so frontend may use either format.
-    """
-    # Try UUID first
-    candidate = db.query(DBCandidate).filter(DBCandidate.id == candidate_id).first()
-    
-    # If not found and contains underscore, try composite ID
-    if not candidate and "_" in candidate_id:
-        parts = candidate_id.rsplit("_", 1)
-        if len(parts) == 2:
-            job_id, username = parts
-            candidate = db.query(DBCandidate).filter(
-                DBCandidate.job_id == job_id,
-                DBCandidate.username == username
-            ).first()
-    
-    return candidate
+# Composite ID resolution removed - Analyzer now pre-generates UUIDs
+# All candidate_id references are now real UUIDs from the start
 
 
 @router.post("/sessions", response_model=ChatSession)
@@ -126,29 +109,30 @@ async def create_chat_session(
     db: Session = Depends(get_db)
 ):
     """Create a new chat session for a candidate."""
-    candidate = resolve_candidate_id(session_data.candidate_id, db)
+    # Query candidate by UUID directly
+    candidate = db.query(DBCandidate).filter(DBCandidate.id == session_data.candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail=f"Candidate not found: {session_data.candidate_id}")
-    
+
     job = db.query(DBJob).filter(DBJob.id == session_data.job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     model_provider = job.model_provider or settings.MODEL_PROVIDER
-    
+
     try:
         db_session = DBChatSession(
-            candidate_id=candidate.id,  # Use resolved UUID, not input ID
+            candidate_id=candidate.id,
             job_id=session_data.job_id,
             model_provider=model_provider
         )
-        
+
         db.add(db_session)
         db.commit()
         db.refresh(db_session)
-        
+
         logger.info(f"Created chat session {db_session.id} for candidate {candidate.id}")
-        
+
         return ChatSession(
             id=db_session.id,
             candidate_id=db_session.candidate_id,
@@ -181,22 +165,22 @@ async def get_candidate_session(
     latest: bool = True,
     db: Session = Depends(get_db)
 ):
-    """Get a candidate's chat session."""
-    # Resolve candidate ID (supports both UUID and composite format)
-    candidate = resolve_candidate_id(candidate_id, db)
+    """Get a candidate's chat session by UUID."""
+    # Query candidate by UUID directly
+    candidate = db.query(DBCandidate).filter(DBCandidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail=f"Candidate not found: {candidate_id}")
-    
+
     query = db.query(DBChatSession).filter(DBChatSession.candidate_id == candidate.id)
-    
+
     if latest:
         query = query.order_by(DBChatSession.updated_at.desc())
-    
+
     db_session = query.first()
-    
+
     if not db_session:
         raise HTTPException(status_code=404, detail="No chat session found for this candidate")
-    
+
     return db_session_to_response(db_session)
 
 
@@ -348,11 +332,12 @@ async def delete_chat_session(session_id: str, db: Session = Depends(get_db)):
 
 @router.delete("/candidates/{candidate_id}/history")
 async def clear_candidate_chat_history(candidate_id: str, db: Session = Depends(get_db)):
-    """Clear all chat history for a candidate."""
-    candidate = resolve_candidate_id(candidate_id, db)
+    """Clear all chat history for a candidate by UUID."""
+    # Query candidate by UUID directly
+    candidate = db.query(DBCandidate).filter(DBCandidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail=f"Candidate not found: {candidate_id}")
-    
+
     try:
         sessions = db.query(DBChatSession).filter(
             DBChatSession.candidate_id == candidate.id

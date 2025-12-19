@@ -23,6 +23,17 @@ class EngagerAgent(BaseAgent):
         input_queue: asyncio.Queue
     ) -> List[Dict[str, Any]]:
         """
+        [DEPRECATED - BATCH MODE]
+
+        This method is no longer used in the pipeline to save API costs.
+        Messages are now generated on-demand via:
+        - orchestrator.generate_message_for_candidate() (backend)
+        - POST /api/candidates/{candidate_id}/generate-message (API)
+        - CandidateCard "Generate Message" button (frontend)
+
+        Kept for potential future batch operations if needed.
+
+        Original functionality:
         Generate outreach messages for analyzed candidates.
 
         Args:
