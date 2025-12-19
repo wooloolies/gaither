@@ -3,9 +3,10 @@ import type { Candidate } from '@/store/agent-store'
 
 interface CandidateGridProps {
   candidates: Candidate[]
+  jobId?: string | number | null
 }
 
-export default function CandidateGrid({ candidates }: CandidateGridProps) {
+export default function CandidateGrid({ candidates, jobId }: CandidateGridProps) {
   if (candidates.length === 0) {
     return (
       <div className="bg-white dark:bg-surface rounded-2xl p-16 text-center border border-border">
@@ -22,7 +23,7 @@ export default function CandidateGrid({ candidates }: CandidateGridProps) {
     <div>
       <div className="space-y-6">
         {candidates.map((candidate, index) => (
-          <CandidateCard key={candidate.id} candidate={candidate} index={index} />
+          <CandidateCard key={candidate.id} candidate={candidate} index={index} jobId={jobId} />
         ))}
       </div>
     </div>

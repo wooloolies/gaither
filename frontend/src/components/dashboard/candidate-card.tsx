@@ -11,10 +11,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import CandidateGraph from '@/features/neo4j/components/candidate-graph'
+import { CandidateChatModal } from '@/components/chat'
+import axios from 'axios'
 
 interface CandidateCardProps {
   candidate: Candidate
   index: number
+  jobId?: string | number | null
+}
+
+interface OutreachMessage {
+  subject: string
+  body: string
 }
 
 const scoreColor = (score: number) => {
@@ -24,9 +32,35 @@ const scoreColor = (score: number) => {
   return 'text-red-600 dark:text-red-400 border-red-500/30 bg-red-500/10'
 }
 
-export default function CandidateCard({ candidate, index }: CandidateCardProps) {
+export default function CandidateCard({ candidate, index, jobId }: CandidateCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [showGraph, setShowGraph] = useState(false)
+  const [showChat, setShowChat] = useState(false)
+  const [message, setMessage] = useState<OutreachMessage | null>(null)
+  const [generatingMessage, setGeneratingMessage] = useState(false)
+  const [messageError, setMessageError] = useState<string | null>(null)
+
+  const handleGenerateMessage = async () => {
+    if (message) {
+      // Message already generated, just expand
+      setExpanded(true)
+      return
+    }
+
+    setGeneratingMessage(true)
+    setMessageError(null)
+
+    try {
+      const response = await axios.post(`http://localhost:8000/api/candidates/${candidate.id}/generate-message`)
+      setMessage(response.data)
+      setExpanded(true)
+    } catch (error: any) {
+      console.error('Error generating message:', error)
+      setMessageError(error.response?.data?.detail || 'Failed to generate message')
+    } finally {
+      setGeneratingMessage(false)
+    }
+  }
 
   return (
     <motion.div
@@ -90,8 +124,12 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
       </div>
 
       <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
-        <button onClick={() => setExpanded(!expanded)} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
-          {expanded ? '↑ Hide Details' : '↓ View Message'}
+        <button
+          onClick={() => message && setExpanded(!expanded)}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium disabled:opacity-50"
+          disabled={!message}
+        >
+          {expanded ? '↑ Hide Message' : message ? '↓ View Message' : 'No message yet'}
         </button>
         <div className="flex gap-3">
           <button
@@ -100,14 +138,26 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           >
             View Graph
           </button>
-          <button className="text-sm font-medium bg-accent-blue text-white px-4 py-2 rounded-xl hover:bg-accent-blue/90 hover:shadow-md transition-all">
-            Contact
+          {jobId && (
+            <button
+              onClick={() => setShowChat(true)}
+              className="text-sm font-medium bg-white dark:bg-accent-purple/10 text-accent-purple border border-accent-purple/30 px-4 py-2 rounded-xl hover:shadow-md transition-all"
+            >
+              Chat with AI
+            </button>
+          )}
+          <button
+            onClick={handleGenerateMessage}
+            disabled={generatingMessage}
+            className="text-sm font-medium bg-accent-blue text-white px-4 py-2 rounded-xl hover:bg-accent-blue/90 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {generatingMessage ? '✨ Generating...' : message ? '✅ Message Ready' : '✉️ Generate Message'}
           </button>
         </div>
       </div>
 
       <AnimatePresence>
-        {expanded && (
+        {expanded && message && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -115,9 +165,21 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
             className="overflow-hidden"
           >
             <div className="mt-5 p-5 bg-surface/30 dark:bg-surface/50 rounded-xl border border-border text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-              <strong className="text-foreground">Subject:</strong> Opportunity at...
+              <strong className="text-foreground">Subject:</strong> {message.subject}
               {'\n\n'}
-              Hi {candidate.username}, I noticed your work on...
+              {message.body}
+            </div>
+          </motion.div>
+        )}
+        {messageError && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-5 p-5 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+              <strong>Error:</strong> {messageError}
             </div>
           </motion.div>
         )}
@@ -136,6 +198,16 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Chat Modal - Only render when opened to avoid premature API calls */}
+      {jobId && showChat && (
+        <CandidateChatModal
+          candidate={candidate}
+          jobId={String(jobId)}
+          open={showChat}
+          onOpenChange={setShowChat}
+        />
+      )}
     </motion.div>
   )
 }

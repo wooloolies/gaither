@@ -4,10 +4,13 @@ Claude API service for AI-powered analysis and generation.
 import anthropic
 import asyncio
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from config import settings
 from .base import (
     AbstractLLMService,
+    ChatMessage,
+    ChatResponse,
+    ToolCall,
     LLMServiceError,
     LLMConfigurationError,
     LLMAPIError,
@@ -180,6 +183,104 @@ class ClaudeService(AbstractLLMService):
 
             logger.info("Claude analysis successful")
             return text_content
+
+        except asyncio.TimeoutError:
+            logger.error(f"Claude API timeout after {timeout}s")
+            raise LLMTimeoutError(f"Claude API call timed out after {timeout} seconds") from None
+
+        except anthropic.APIError as e:
+            logger.error(f"Claude API error: {e}")
+            raise LLMAPIError(f"Claude API error: {e}") from e
+
+        except Exception as e:
+            logger.error(f"Unexpected error calling Claude API: {e}")
+            raise LLMAPIError(f"Unexpected Claude API error: {e}") from e
+
+    async def chat(
+        self,
+        messages: List[ChatMessage],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        max_tokens: int = 4096,
+        timeout: int = 60
+    ) -> ChatResponse:
+        """
+        Multi-turn chat with Claude with optional tool calling.
+
+        Args:
+            messages: Conversation history (system, user, assistant messages)
+            tools: Optional list of tool definitions
+            max_tokens: Maximum tokens for response
+            timeout: Timeout in seconds (default: 60)
+
+        Returns:
+            ChatResponse with content and any tool calls
+        """
+        return await self._retry_with_backoff(
+            self._chat_impl,
+            messages,
+            tools,
+            max_tokens,
+            timeout
+        )
+
+    async def _chat_impl(
+        self,
+        messages: List[ChatMessage],
+        tools: Optional[List[Dict[str, Any]]],
+        max_tokens: int,
+        timeout: int
+    ) -> ChatResponse:
+        """Implementation of chat with timeout"""
+        try:
+            # Convert messages to Claude format
+            # Separate system messages from user/assistant messages
+            system_messages = [msg.content for msg in messages if msg.role == "system"]
+            conversation_messages = [
+                {"role": msg.role, "content": msg.content}
+                for msg in messages
+                if msg.role in ("user", "assistant")
+            ]
+
+            # Claude uses a separate system parameter
+            system_prompt = "\n\n".join(system_messages) if system_messages else None
+
+            # Build request parameters
+            request_params = {
+                "model": self.model,
+                "max_tokens": max_tokens,
+                "messages": conversation_messages
+            }
+
+            if system_prompt:
+                request_params["system"] = system_prompt
+
+            if tools:
+                request_params["tools"] = tools
+
+            # Run sync client in thread pool with timeout
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self.client.messages.create,
+                    **request_params
+                ),
+                timeout=timeout
+            )
+
+            # Extract text content and tool calls from response
+            text_content = ""
+            tool_calls = []
+
+            for content in response.content:
+                if content.type == "text":
+                    text_content += content.text
+                elif content.type == "tool_use":
+                    tool_calls.append(ToolCall(
+                        tool_name=content.name,
+                        arguments=content.input
+                    ))
+
+            logger.info(f"Claude chat successful. Tool calls: {len(tool_calls)}")
+            return ChatResponse(content=text_content, tool_calls=tool_calls)
 
         except asyncio.TimeoutError:
             logger.error(f"Claude API timeout after {timeout}s")

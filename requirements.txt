@@ -10,3 +10,4 @@ python-dotenv==1.0.0
 websockets>=13.0
 neo4j>=5.14.0
 loguru==0.7.3
+ddgs==9.9.3

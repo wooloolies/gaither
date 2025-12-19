@@ -16,8 +16,16 @@ interface HireJobPageProps {
 export default function HireJobPage({ params }: HireJobPageProps) {
   const { jobId } = use(params)
   const router = useRouter()
-  const { setSelectedModel, addCandidate, candidates: storeCandidates } = useAgentStore()
+  const { setSelectedModel, setCurrentJob, addCandidate, candidates: storeCandidates, reset, currentJob } = useAgentStore()
   const [isJobStarted, setIsJobStarted] = useState(false)
+
+  // Reset store when navigating to a different job
+  useEffect(() => {
+    // If we have a different job loaded, reset the store first
+    if (currentJob && String(currentJob.id) !== jobId) {
+      reset()
+    }
+  }, [jobId, currentJob, reset])
 
   // Fetch job from server to ensure it exists and user has access
   const { data: job, isLoading, isError, error } = useGetJobApiJobsJobIdGet(jobId)
@@ -28,7 +36,22 @@ export default function HireJobPage({ params }: HireJobPageProps) {
     { query: { enabled: !!jobId } }
   )
 
-  // Load existing candidates into the store when fetched
+  // Set current job and load existing candidates when job data is fetched
+  useEffect(() => {
+    if (job && (!currentJob || String(currentJob.id) !== job.id)) {
+      // Set the current job in store
+      setCurrentJob({
+        id: job.id,
+        title: job.title,
+        company_name: job.company_name,
+        location: job.location ?? undefined,
+        description: job.description,
+        model_provider: job.model_provider ?? undefined,
+      })
+    }
+  }, [job, currentJob, setCurrentJob])
+
+  // Load existing candidates into the store when fetched (only if store is empty for this job)
   useEffect(() => {
     if (existingCandidates && existingCandidates.length > 0 && storeCandidates.length === 0) {
       existingCandidates.forEach((candidate) => {
