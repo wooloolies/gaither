@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from 'react'
-import { chatApi, ChatMessageResponse, ChatSessionResponse, ToolCallSchema } from '@/lib/api-client'
+import { chatApi, ChatMessageResponse, ToolCallSchema } from '@/lib/api-client'
 
 export interface UseCandidateChatOptions {
   candidateId: string
