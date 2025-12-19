@@ -151,7 +151,6 @@ class ChatToolService:
 
         try:
             # Fetch repo details, commits, and languages in parallel
-            import asyncio
             repo_task = self.github_service.get_repo(username, repo_name)
             commits_task = self.github_service.get_repo_commits(username, repo_name, per_page=10)
             languages_task = self.github_service.get_repo_languages(username, repo_name)

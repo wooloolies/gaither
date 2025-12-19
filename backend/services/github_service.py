@@ -100,8 +100,9 @@ class GitHubService:
                 self._rate_limit_reset = int(
                     response.headers.get("X-RateLimit-Reset", self._rate_limit_reset)
                 )
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as e:
+            # Silently ignore malformed rate limit headers and keep existing values
+            logger.debug(f"Failed to parse rate limit headers: {e}")
 
     async def _check_rate_limit(self, is_search: bool = False):
         """Check if we're rate limited and wait if necessary"""
