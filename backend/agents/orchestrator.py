@@ -215,6 +215,7 @@ class RecruitingOrchestrator:
                             job_id=job_id,
                             username=candidate["username"],
                             profile_url=candidate["profile_url"],
+                            avatar_url=candidate.get("avatar_url"),
                             strengths=analysis.get("strengths", []),
                             concerns=analysis.get("concerns", []),
                             skills=analysis.get("skills", []),
